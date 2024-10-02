@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) =>
-              const Layout(), // Ganti dengan halaman utama Anda
+              const Layout(),
         ),
       );
     });
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
           decoration: const BoxDecoration(
             gradient: LinearGradient(
             colors: [
-              Color(0xFF0D006F), // Warna pertama// Warna kedua
+              Color(0xFF0D006F),
               Color(0xFF9614D0),
             ], // Warna gradasi
             begin: Alignment.topCenter,
@@ -66,13 +66,12 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                // Logo atau gambar untuk splash screen
+                // Logo splash screen
                 Image.asset(
-                  'assets/image/LOGO GEM DEV REVISI.png', // Ganti dengan nama file gambar Anda
-                  width: 170, // Atur ukuran gambar
+                  'assets/image/LOGO GEM DEV REVISI.png',
+                  width: 170,
                 ),
                 const SizedBox(height: 20),
-                // Teks atau widget lain yang ingin ditampilkan
               ],
             ),
           ),
@@ -97,8 +96,8 @@ class Layout extends StatelessWidget {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF0D006F), // Warna pertama
-              Color(0xFF7509FE), // Warna kedua
+              Color(0xFF0D006F),
+              Color(0xFF7509FE), 
               Color(0xFF9614D0),
             ], // Warna gradasi
             begin: Alignment.topCenter,
@@ -112,7 +111,7 @@ class Layout extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(
                     bottom:
-                        55.0), // Menempatkan teks 50 piksel dari atas dan 20 piksel dari kiri
+                        55.0),
                 child: Text(
                   'Spaceword',
                   style: TextStyle(
@@ -123,9 +122,9 @@ class Layout extends StatelessWidget {
                     shadows: [
                       Shadow(
                         offset:
-                            const Offset(2.0, 2.0), // Posisi bayangan (x, y)
-                        blurRadius: 3.0, // Tingkat blur bayangan
-                        color: Colors.black.withOpacity(0.5), // Warna bayangan
+                            const Offset(2.0, 2.0),
+                        blurRadius: 3.0,
+                        color: Colors.black.withOpacity(0.5),
                       ),
                     ],
                   ),
@@ -149,7 +148,7 @@ class Layout extends StatelessWidget {
                     side: const BorderSide(
                       color: Color(0xFFD1BEDA),
                       width: 7.0,
-                    ), // Membuat sudut melengkung
+                    ),
                   ),
                 ),
                 child: const Text(
@@ -159,7 +158,7 @@ class Layout extends StatelessWidget {
                     color: Color(0xFFFFF50B),
                     fontSize: 25,
                   ),
-                ), // Teks tombol
+                ),
               ),
             ],
           ),
@@ -182,15 +181,15 @@ class Level extends StatelessWidget {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(
-              IconData(0xf02db, fontFamily: 'MaterialIcons'), // Ikon pertama
-              color: Color(0xFFFFC700), // Warna ikon
-              size: 50, // Ukuran ikon
+              IconData(0xf02db, fontFamily: 'MaterialIcons'),
+              color: Color(0xFFFFC700),
+              size: 50,
             ),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const Layout()),
-              ); // Aksi saat ikon pertama ditekan
+              ); 
             },
           ),
           actions: [
@@ -198,12 +197,12 @@ class Level extends StatelessWidget {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(
-                      right: 8.0), // Memberikan jarak antara teks dan ikon
+                      right: 8.0), 
                   child: Text(
-                    '0', // Teks "0"
+                    '0',
                     style: TextStyle(
-                      color: Colors.white, // Warna teks
-                      fontSize: 45, // Ukuran teks
+                      color: Colors.white, 
+                      fontSize: 45, 
                     ),
                   ),
                 ),
@@ -211,13 +210,11 @@ class Level extends StatelessWidget {
                   icon: const Icon(
                     IconData(0xeea2,
                         fontFamily:
-                            'MaterialIcons'), // Menambahkan ikon attach_money_outlined
-                    color: Color(0xFFFFC700), // Warna ikon
-                    size: 50, // Ukuran ikon
+                            'MaterialIcons'), 
+                    color: Color(0xFFFFC700), 
+                    size: 50, 
                   ),
-                  onPressed: () {
-                    // Aksi saat ikon attach_money_outlined ditekan
-                  },
+                  onPressed: () {},
                 ),
               ],
             ),
@@ -239,14 +236,12 @@ class Level extends StatelessWidget {
           child: Center(
             child: Column(
               mainAxisAlignment:
-                  MainAxisAlignment.center, // Pusatkan kolom secara vertikal
+                  MainAxisAlignment.center, // kolom jadi vertikal
               children: [
-                // Menambahkan jarak atas untuk menurunkan tombol lebih bawah
                 const SizedBox(
-                    height: 80), // Jarak antara atas layar dan tombol
-                // Button EASY
+                    height: 80), // jarak atas layar dan tombol
                 SizedBox(
-                  width: 200, // Lebar yang sama untuk semua tombol
+                  width: 200,
                   child: _buildStrokeButton(
                     color: const Color(0xFF18F513),
                     text: 'EASY',
@@ -254,14 +249,14 @@ class Level extends StatelessWidget {
                       Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const EasyLevel()),
-                  );// Aksi untuk tombol EASY
+                  );
                     },
                   ),
                 ),
-                const SizedBox(height: 35), // Jarak antara tombol
-                // Button MEDIUM
+                const SizedBox(height: 35),
+
                 SizedBox(
-                  width: 200, // Lebar yang sama untuk semua tombol
+                  width: 200, 
                   child: _buildStrokeButton(
                     color: const Color(0xFFF3DC0E),
                     text: 'MEDIUM',
@@ -269,14 +264,14 @@ class Level extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const MediumLevel())
-                        );// Aksi untuk tombol MEDIUM
+                        );
                     },
                   ),
                 ),
-                const SizedBox(height: 35), // Jarak antara tombol
-                // Button HARD
+                const SizedBox(height: 35),
+         
                 SizedBox(
-                  width: 200, // Lebar yang sama untuk semua tombol
+                  width: 200,
                   child: _buildStrokeButton(
                     color: const Color(0xFFF82609),
                     text: 'HARD',
@@ -284,35 +279,34 @@ class Level extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const HardLevel())
-                      );  // Aksi untuk tombol HARD
+                      ); 
                     },
                   ),
                 ),
-                const SizedBox(height: 40), // Jarak antara tombol dan ikon
-                // Menambahkan ikon checkroom_outlined dengan teks di bawahnya
+                const SizedBox(height: 40), 
                 Column(
                   children: [
                     IconButton(
                       icon: const Icon(
                         IconData(0xef4c,
                             fontFamily:
-                                'MaterialIcons'), // Ikon checkroom_outlined
-                        color: Color(0xFFFFC700), // Warna ikon
-                        size: 50, // Ukuran ikon
+                                'MaterialIcons'), 
+                        color: Color(0xFFFFC700), 
+                        size: 50,
                       ),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => const CustomChr()),
-                        ); // Aksi saat ikon checkroom_outlined ditekan
+                        ); 
                       },
                     ),
                     const Text(
-                      'CUSTOM', // Teks di bawah ikon
+                      'CUSTOM', 
                       style: TextStyle(
-                        fontSize: 14, // Ukuran teks
-                        color: Colors.white, // Warna teks
+                        fontSize: 14,
+                        color: Colors.white, 
                       ),
                     ),
                   ],
@@ -332,13 +326,13 @@ class Level extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: color, // Warna latar belakang tombol
-        borderRadius: BorderRadius.circular(12), // Radius sudut tombol
+        color: color, 
+        borderRadius: BorderRadius.circular(12), 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.7), // Warna bayangan
-            offset: const Offset(4.0, 4.0), // Posisi bayangan
-            blurRadius: 6.0, // Jarak kabur bayangan
+            color: Colors.black.withOpacity(0.7),
+            offset: const Offset(4.0, 4.0), 
+            blurRadius: 6.0, 
           ),
         ],
       ),
@@ -346,11 +340,11 @@ class Level extends StatelessWidget {
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color
-              .withOpacity(0), // Warna latar belakang tombol menjadi transparan
-          shadowColor: Colors.transparent, // Menghilangkan shadow default
+              .withOpacity(0),
+          shadowColor: Colors.transparent, 
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // Radius sudut tombol
+            borderRadius: BorderRadius.circular(12), 
           ),
         ),
         child: Text(
@@ -362,9 +356,9 @@ class Level extends StatelessWidget {
             shadows: [
               Shadow(
                 color: Color(
-                    0xFF000000), // Warna bayangan hitam dengan transparansi 50%
-                offset: Offset(2.0, 2.0), // Posisi bayangan
-                blurRadius: 4.0, // Jarak kabur bayangan
+                    0xFF000000), 
+                offset: Offset(2.0, 2.0), 
+                blurRadius: 4.0, 
               ),
             ],
           ),
@@ -522,7 +516,7 @@ class _CharacterCustomizationPageState
           children: [
             TextField(
               decoration: const InputDecoration(
-              labelText: 'Edit Userrname',
+              labelText: 'Edit Username',
               border: OutlineInputBorder(),
               ),
               onChanged: (value) {
@@ -585,7 +579,7 @@ class _CharacterCustomizationPageState
           ),
           const SizedBox(height: 12),
 
-          // Clothes Section
+          // Clothes
           Expanded(
             flex: 2,
             child: Column(
@@ -656,7 +650,7 @@ class _CharacterCustomizationPageState
 
           const SizedBox(height: 16),
 
-          // Skin Section
+          // Skin 
           Expanded(
             flex: 2,
             child: Column(
@@ -756,11 +750,11 @@ class EasyLevel extends StatefulWidget {
 
 class _CrosswordGridState extends State<EasyLevel> {
   List<List<String>> correctAnswers = [
-    ['J', 'E', 'R', 'U'],
-    ['H', 'U', 'T', 'A'],
-    ['S', 'I', 'N', 'G'],
-    ['M', 'A', 'L', 'A'],
-    ['D', 'E', 'N', 'D'],
+    ['A', 'P', 'E', 'L'],
+    ['R', 'U', 'S', 'A'],
+    ['U', 'A', 'N', 'G'],
+    ['M', 'A', 'T', 'A'],
+    ['J', 'A', 'U', 'H'],
   ];
 
   List<List<String>> crossword = [
@@ -772,11 +766,11 @@ class _CrosswordGridState extends State<EasyLevel> {
   ];
 
   List<String> clues = [
-    "Jenis buah yang identik dengan vitamin C",
-    "Ekosistem yang terdiri dari pohon dan tumbuhan",
-    "Raja hewan yang dikenal dengan nama “King of the Jungle”",
-    "Waktu untuk istirahat dan tidur",
-    "Sejumlah uang yang harus dibayar sebagai sanksi karena melanggar aturan",
+    "Buah yang dimakan snow white",
+    "Hewan ...",
+    "Alat yang digunakan untuk jual beli",
+    "Melihat dengan menggunakan ...",
+    "Lawan kata dekat",
   ];
 
   int activeClueIndex = 0;
@@ -802,16 +796,16 @@ class _CrosswordGridState extends State<EasyLevel> {
 
   void updateRow(int rowIndex, String newRowValue) {
     setState(() {
-      // Jika input tidak lengkap (jumlah karakter tidak sesuai dengan jawaban benar)
+      // kalau jumlah karakter beda dengan jumlah karakter jawaban benar maka dianggap jawaban salah
       if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < crossword[rowIndex].length; i++) {
-          crossword[rowIndex][i] = ''; // Kosongkan kolom jika salah
+          crossword[rowIndex][i] = ''; // dan kolom akan tetap kosong
         }
         return;
       }
 
-      // Jika input lengkap, lanjutkan proses pengecekan
+      // kalau lengkap tetap lanjut pengecekan antara benar atau salah (disesuaiin sama karakter pada jawaban benar)
       List<String> newRow = newRowValue.split('');
       bool isCorrect = true;
 
@@ -830,7 +824,7 @@ class _CrosswordGridState extends State<EasyLevel> {
       } else {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < newRow.length; i++) {
-          crossword[rowIndex][i] = ''; // Kosongkan kolom jika salah
+          crossword[rowIndex][i] = ''; // jawaban salah = kolom kosong
         }
       }
     });
@@ -838,7 +832,7 @@ class _CrosswordGridState extends State<EasyLevel> {
 
   void showAnswerInputDialog(BuildContext context, int rowIndex) {
     if (isCorrectRow[rowIndex]) {
-      return; // Jika baris sudah benar, dialog tidak akan muncul
+      return; // kolom yang sudah terjawab ga bisa dimainkan lagi alias pop up nya ga akan muncul
     }
 
     final TextEditingController controller =
@@ -884,16 +878,16 @@ class _CrosswordGridState extends State<EasyLevel> {
             ElevatedButton(
               onPressed: () {
                 String newValue = controller.text
-                    .trim(); // Ambil nilai dari controller dan trim spasi
+                    .trim(); // spasi = jawaban kosong
 
-                // Cek apakah input kosong, jika ya, jangan lakukan apapun
+                // cek input kosong, kalau kosong = kolom juga tetap kosong
                 if (newValue.isEmpty) {
-                  Navigator.pop(context); // Tutup dialog jika input kosong
+                  Navigator.pop(context);
                   return;
                 }
 
                 updateRow(rowIndex,
-                    newValue); // Hanya update row jika input tidak kosong
+                    newValue); // update row hanya saat jawabannya dah bener
                 Navigator.pop(context);
               },
               child: const Text('Submit'),
@@ -1048,16 +1042,14 @@ class _MediumLevelState extends State<MediumLevel> {
 
   void updateRow(int rowIndex, String newRowValue) {
     setState(() {
-      // Jika input tidak lengkap (jumlah karakter tidak sesuai dengan jawaban benar)
       if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < crossword[rowIndex].length; i++) {
-          crossword[rowIndex][i] = ''; // Kosongkan kolom jika salah
+          crossword[rowIndex][i] = ''; 
         }
         return;
       }
 
-      // Jika input lengkap, lanjutkan proses pengecekan
       List<String> newRow = newRowValue.split('');
       bool isCorrect = true;
 
@@ -1076,7 +1068,7 @@ class _MediumLevelState extends State<MediumLevel> {
       } else {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < newRow.length; i++) {
-          crossword[rowIndex][i] = ''; // Kosongkan kolom jika salah
+          crossword[rowIndex][i] = '';
         }
       }
     });
@@ -1084,7 +1076,7 @@ class _MediumLevelState extends State<MediumLevel> {
 
   void showAnswerInputDialog(BuildContext context, int rowIndex) {
     if (isCorrectRow[rowIndex]) {
-      return; // Jika baris sudah benar, dialog tidak akan muncul
+      return; 
     }
 
     final TextEditingController controller =
@@ -1130,16 +1122,15 @@ class _MediumLevelState extends State<MediumLevel> {
             ElevatedButton(
               onPressed: () {
                 String newValue = controller.text
-                    .trim(); // Ambil nilai dari controller dan trim spasi
-
-                // Cek apakah input kosong, jika ya, jangan lakukan apapun
+                    .trim(); 
+                
                 if (newValue.isEmpty) {
-                  Navigator.pop(context); // Tutup dialog jika input kosong
+                  Navigator.pop(context); 
                   return;
                 }
 
                 updateRow(rowIndex,
-                    newValue); // Hanya update row jika input tidak kosong
+                    newValue); 
                 Navigator.pop(context);
               },
               child: const Text('Submit'),
@@ -1248,11 +1239,11 @@ class HardLevel extends StatefulWidget {
 
 class _HardLevelState extends State<HardLevel> {
   List<List<String>> correctAnswers = [
-    ['Z', 'A', 'K', 'A', 'R', 'I'],
-    ['Z', 'A', 'K', 'A', 'R', 'I'],
-    ['Z', 'A', 'K', 'A', 'R', 'I'],
-    ['Z', 'A', 'K', 'A', 'R', 'I'],
-    ['Z', 'A', 'K', 'A', 'R', 'I'],
+    ['L', 'A', 'P', 'T', 'O', 'P'],
+    ['P', 'I', 'R', 'I', 'N', 'G'],
+    ['A', 'U', 'D', 'R', 'E', 'Y'],
+    ['K', 'E', 'R', 'E', 'T', 'A'],
+    ['T', 'A', 'N', 'G', 'A', 'N'],
   ];
 
   List<List<String>> crossword = [
@@ -1264,11 +1255,11 @@ class _HardLevelState extends State<HardLevel> {
   ];
 
   List<String> clues = [
-    "Jenis buah yang identik dengan vitamin C",
-    "Ekosistem yang terdiri dari pohon dan tumbuhan",
-    "Raja hewan yang dikenal dengan nama “King of the Jungle”",
-    "Waktu untuk istirahat dan tidur",
-    "Sejumlah uang yang harus dibayar sebagai sanksi karena melanggar aturan",
+    "Gue ngoding paake apa rek",
+    "Alas makan",
+    "Nama programmer roblox",
+    "Transportasi yang berjalan diatas rel",
+    "Anggota badan yang digunakan untuk membawa barang",
   ];
 
   int activeClueIndex = 0;
@@ -1294,16 +1285,14 @@ class _HardLevelState extends State<HardLevel> {
 
   void updateRow(int rowIndex, String newRowValue) {
     setState(() {
-      // Jika input tidak lengkap (jumlah karakter tidak sesuai dengan jawaban benar)
       if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < crossword[rowIndex].length; i++) {
-          crossword[rowIndex][i] = ''; // Kosongkan kolom jika salah
+          crossword[rowIndex][i] = ''; 
         }
         return;
       }
 
-      // Jika input lengkap, lanjutkan proses pengecekan
       List<String> newRow = newRowValue.split('');
       bool isCorrect = true;
 
@@ -1322,7 +1311,7 @@ class _HardLevelState extends State<HardLevel> {
       } else {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < newRow.length; i++) {
-          crossword[rowIndex][i] = ''; // Kosongkan kolom jika salah
+          crossword[rowIndex][i] = '';
         }
       }
     });
@@ -1330,7 +1319,7 @@ class _HardLevelState extends State<HardLevel> {
 
   void showAnswerInputDialog(BuildContext context, int rowIndex) {
     if (isCorrectRow[rowIndex]) {
-      return; // Jika baris sudah benar, dialog tidak akan muncul
+      return;
     }
 
     final TextEditingController controller =
@@ -1376,16 +1365,15 @@ class _HardLevelState extends State<HardLevel> {
             ElevatedButton(
               onPressed: () {
                 String newValue = controller.text
-                    .trim(); // Ambil nilai dari controller dan trim spasi
-
-                // Cek apakah input kosong, jika ya, jangan lakukan apapun
+                    .trim();
+                
                 if (newValue.isEmpty) {
-                  Navigator.pop(context); // Tutup dialog jika input kosong
+                  Navigator.pop(context); 
                   return;
                 }
 
                 updateRow(rowIndex,
-                    newValue); // Hanya update row jika input tidak kosong
+                    newValue);
                 Navigator.pop(context);
               },
               child: const Text('Submit'),
