@@ -864,10 +864,10 @@ class EasyLevel extends StatefulWidget {
 
   @override
   // ignore: library_private_types_in_public_api
-  _CrosswordGridState createState() => _CrosswordGridState();
+  _EasyLevelState createState() => _EasyLevelState();
 }
 
-class _CrosswordGridState extends State<EasyLevel>
+class _EasyLevelState extends State<EasyLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
@@ -1148,7 +1148,10 @@ class _CrosswordGridState extends State<EasyLevel>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -1170,6 +1173,14 @@ class _CrosswordGridState extends State<EasyLevel>
       ),
       body: Stack(
         children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/image/Background Galaxy.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
