@@ -503,7 +503,7 @@ class _CharacterCustomizationPageState
   final List<String> clothesAssets = [
     'assets/clothes/KOSTUM PENCURI.png',
     'assets/clothes/Kostum Iblis Revisi.png',
-    'assets/clothes/Kostum Koki Revisi Lagi.png',
+    'assets/clothes/Kostum Koki Revisi lagi.png',
     'assets/clothes/Kostum Raja.png',
     'assets/clothes/Kostum Domba.png',
     'assets/clothes/Kostum Rubah.png',
@@ -902,29 +902,36 @@ class _EasyLevelState extends State<EasyLevel>
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
-  List<Offset> emotePositions = [];
-  List<IconData> emotes = [];
   String statusMessage = '';
   Color statusColor = Colors.white;
   double statusMessageYPosition = 200;
 
-  late AnimationController _emoteController;
+  late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
+  late Animation<double> _scaleAnimation;
+
 
   @override
-  void initState() {
-    super.initState();
-    startTime();
+    void initState() {
+      super.initState();
+      startTime();
 
-    _emoteController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
+      _animationController = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 1),
     );
 
-    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(
+      _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
-        parent: _emoteController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
       ),
     );
   }
@@ -933,7 +940,7 @@ class _EasyLevelState extends State<EasyLevel>
   void dispose() {
     timer?.cancel();
     _focusNode.dispose();
-    _emoteController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -949,7 +956,7 @@ class _EasyLevelState extends State<EasyLevel>
   }
 
   void showFinalPopup(bool isWin) {
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       showDialog(
         // ignore: use_build_context_synchronously
         context: context,
@@ -982,11 +989,13 @@ class _EasyLevelState extends State<EasyLevel>
 
   void updateRow(int rowIndex, String newRowValue) {
     setState(() {
-      if (newRowValue.length != correctAnswers[rowIndex].length) {
+        if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
-        crossword[rowIndex].fillRange(0, crossword[rowIndex].length, '');
-        triggerSadEmotes();
+        for (int i = 0; i < crossword[rowIndex].length; i++) {
+          crossword[rowIndex][i] = ''; // kolom akan tetap kosong
+        }
         return;
+
       }
 
       List<String> newRow = newRowValue.split('');
@@ -1003,77 +1012,25 @@ class _EasyLevelState extends State<EasyLevel>
         crossword[rowIndex] = List.from(correctAnswers[rowIndex]);
         isCorrectRow[rowIndex] = true;
         isRowWrong[rowIndex] = false;
-        triggerHappyEmotes();
+        statusMessage = 'BENAR!';
+        statusColor = Colors.green;
+        _animationController.forward(from: 0.0);
+
+
         remainingTime += 3;
         addScore1(5);
       } else {
         isRowWrong[rowIndex] = true;
         crossword[rowIndex].fillRange(0, crossword[rowIndex].length, '');
-        triggerSadEmotes();
+        statusMessage = 'SALAH!';
+        statusColor = const Color.fromARGB(255, 207, 17, 4);
+        _animationController.forward(from: 0.0);
       }
 
       if (isCorrectRow.every((row) => row)) {
         showFinalPopup(true);
       }
     });
-  }
-
-  void _animateStatusMessage() {
-    setState(() {
-      statusMessageYPosition = MediaQuery.of(context).size.height - 100;
-    });
-
-    Future.delayed(const Duration(milliseconds: 100), () {
-      setState(() {
-        statusMessageYPosition = 0;
-      });
-    });
-
-    Future.delayed(const Duration(seconds: 4), () {
-      setState(() {
-        statusMessage = '';
-      });
-    });
-  }
-
-  void triggerHappyEmotes() {
-    setState(() {
-      emotePositions.clear();
-      emotes.clear();
-      for (int i = 0; i < 5; i++) {
-        emotePositions.add(Offset(
-          MediaQuery.of(context).size.width / 5 * (i + 1) - 64,
-          MediaQuery.of(context).size.height - 100,
-        ));
-        emotes.add(Icons.emoji_emotions_outlined);
-      }
-      statusMessage = 'BENAR!';
-      statusColor = Colors.green;
-      _emoteController.reset();
-      _emoteController.forward();
-    });
-
-    _animateStatusMessage();
-  }
-
-  void triggerSadEmotes() {
-    setState(() {
-      emotePositions.clear();
-      emotes.clear();
-      for (int i = 0; i < 5; i++) {
-        emotePositions.add(Offset(
-          MediaQuery.of(context).size.width / 5 * (i + 1) - 64,
-          MediaQuery.of(context).size.height - 150,
-        ));
-        emotes.add(Icons.emoji_emotions);
-      }
-      statusMessage = 'SALAH!';
-      statusColor = const Color.fromARGB(255, 207, 17, 4);
-      _emoteController.reset();
-      _emoteController.forward();
-    });
-
-    _animateStatusMessage();
   }
 
   void showAnswerInputDialog(BuildContext context, int rowIndex) {
@@ -1150,6 +1107,16 @@ class _EasyLevelState extends State<EasyLevel>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 255, 255, 255),
+            size: 30,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -1158,7 +1125,7 @@ class _EasyLevelState extends State<EasyLevel>
             child: Center(
               child: Text('Waktu: $remainingTime detik',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
           Padding(
@@ -1166,7 +1133,7 @@ class _EasyLevelState extends State<EasyLevel>
             child: Center(
               child: Text('Score: $score',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
         ],
@@ -1176,7 +1143,7 @@ class _EasyLevelState extends State<EasyLevel>
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/image/Background Galaxy.png'),
+                image: AssetImage('assets/image/1.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -1185,12 +1152,13 @@ class _EasyLevelState extends State<EasyLevel>
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
+                const SizedBox(height: 100),
                 Column(
                   children: List.generate(crossword.length, (rowIndex) {
                     return Row(
                       children:
                           List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor = Colors.black;
+                        Color borderColor = const Color.fromARGB(255, 255, 255, 255);
 
                         if (isCorrectRow[rowIndex]) {
                           borderColor = Colors.green;
@@ -1216,7 +1184,8 @@ class _EasyLevelState extends State<EasyLevel>
                                     crossword[rowIndex][colIndex],
                                     style: const TextStyle(
                                         fontSize: 24.0,
-                                        fontWeight: FontWeight.bold),
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromARGB(255, 255, 255, 255)),
                                   ),
                                 ),
                               ),
@@ -1227,43 +1196,30 @@ class _EasyLevelState extends State<EasyLevel>
                     );
                   }),
                 ),
-              ],
-            ),
-          ),
-          AnimatedBuilder(
-            animation: _emoteController,
-            builder: (context, child) {
-              return Stack(
-                children: List.generate(emotePositions.length, (index) {
-                  return Positioned(
-                    left: emotePositions[index].dx,
-                    top: emotePositions[index].dy -
-                        (MediaQuery.of(context).size.height *
-                            _emoteController.value),
-                    child: Opacity(
-                      opacity: _opacityAnimation.value,
-                    ),
-                  );
-                }),
-              );
-            },
-          ),
-          AnimatedPositioned(
-            duration: const Duration(seconds: 1),
-            curve: Curves.easeInOut,
-            left: 0,
-            right: 0,
-            top: statusMessageYPosition,
-            child: Center(
-              child: Text(
-                statusMessage,
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
-                  fontFamily: 'FontdinerSwanky',
+                const SizedBox(height: 20),
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _opacityAnimation.value,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Text(
+                        statusMessage,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
           ),
         ],
