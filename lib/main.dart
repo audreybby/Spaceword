@@ -1,11 +1,21 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:spacewordgame/provider.dart';
+import 'package:provider/provider.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+            create: (_) => CoinProvider()), // Register CoinProvider
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -111,7 +121,8 @@ class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
 
     // Generate random stars
     for (int i = 0; i < 15; i++) {
-      _stars.add(_FallingStar(delayFactor: i * 0.1)); // Delay factor for sequential falling
+      _stars.add(_FallingStar(
+          delayFactor: i * 0.1)); // Delay factor for sequential falling
     }
   }
 
@@ -166,8 +177,8 @@ class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFAE0AFB),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15),
                       minimumSize: const Size(120, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -195,7 +206,8 @@ class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
             return AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
-                double animationValue = (_controller.value + star.delayFactor) % 1;
+                double animationValue =
+                    (_controller.value + star.delayFactor) % 1;
 
                 // Star and smoke trail
                 return Stack(
@@ -209,7 +221,8 @@ class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
                         child: Icon(
                           Icons.circle,
                           color: Colors.grey.withOpacity(0.2),
-                          size: star.size * 1.5, // Slightly larger for the trail effect
+                          size: star.size *
+                              1.5, // Slightly larger for the trail effect
                         ),
                       ),
                     ),
@@ -220,14 +233,20 @@ class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
                       child: Transform.rotate(
                         angle: animationValue * 2 * pi * star.rotationSpeed,
                         child: Transform.scale(
-                          scale: 1 + 0.3 * sin(animationValue * 2 * pi * star.twinkleSpeed), // Enhanced bling
+                          scale: 1 +
+                              0.3 *
+                                  sin(animationValue *
+                                      2 *
+                                      pi *
+                                      star.twinkleSpeed), // Enhanced bling
                           child: Icon(
                             Icons.star,
                             color: Colors.white, // White for bright effect
                             size: star.size,
                             shadows: [
                               Shadow(
-                                color: Colors.blueAccent.withOpacity(0.7), // Glow shadow
+                                color: Colors.blueAccent
+                                    .withOpacity(0.7), // Glow shadow
                                 blurRadius: 10,
                               ),
                               Shadow(
@@ -259,13 +278,16 @@ class _FallingStar {
   final double delayFactor;
 
   _FallingStar({required this.delayFactor})
-      : size = Random().nextDouble() * 8 + 8,    // Random smaller size for more realism
+      : size = Random().nextDouble() * 8 +
+            8, // Random smaller size for more realism
         speed = Random().nextDouble() * 2 + 0.5, // Random speed multiplier
-        rotationSpeed = Random().nextDouble() * 2, // Random rotation speed for asteroid effect
+        rotationSpeed = Random().nextDouble() *
+            2, // Random rotation speed for asteroid effect
         twinkleSpeed = Random().nextDouble() * 2 + 0.5; // Random twinkle speed
 
   double getXPosition(double animationValue) {
-    return 400 - animationValue * 600 * speed; // Diagonal movement from right to left
+    return 400 -
+        animationValue * 600 * speed; // Diagonal movement from right to left
   }
 
   double getYPosition(double animationValue) {
@@ -298,27 +320,31 @@ class Level extends StatelessWidget {
             },
           ),
           actions: [
-            Row(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(right: 8.0),
-                  child: Text(
-                    '0',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 45,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    IconData(0xeea2, fontFamily: 'MaterialIcons'),
-                    color: Color(0xFFFFC700),
-                    size: 50,
-                  ),
-                  onPressed: () {},
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Consumer<CoinProvider>(
+                builder: (context, coinProvider, child) {
+                  return Row(
+                    children: [
+                      Text(
+                        '${coinProvider.coins}', // Display current coin count
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontSize: 44,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.monetization_on,
+                          color: Color(0xFFFFC700),
+                          size: 50,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -542,7 +568,6 @@ class _CharacterCustomizationPageState
           prefs.getStringList('purchasedBodies') ?? [bodyAssets[0]];
       purchasedClothes =
           prefs.getStringList('purchasedClothes') ?? [clothesAssets[0]];
-      playerCoins = prefs.getInt('playerCoins') ?? 1000; // Load player coins
     });
   }
 
@@ -567,21 +592,22 @@ class _CharacterCustomizationPageState
   }
 
   void buyItem(int price, String item, String itemType) {
-    if (playerCoins >= price) {
+    final coinProvider = Provider.of<CoinProvider>(context, listen: false);
+
+    if (coinProvider.purchaseSkin(price)) {
       setState(() {
-        playerCoins -= price;
+        // Add item to the purchased list based on item type
         if (itemType == 'clothes') {
           purchasedClothes.add(item);
         } else if (itemType == 'body') {
           purchasedBodies.add(item);
         }
+
+        // Save the updated preferences
+        _saveCharacterPreferences();
       });
-      _saveCharacterPreferences();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('You have purchased $itemType for $price coins!')),
-      );
     } else {
+      // Show a message if the player doesn't have enough coins
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Not enough coins!')),
       );
@@ -653,13 +679,29 @@ class _CharacterCustomizationPageState
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                const Icon(Icons.monetization_on, color: Colors.yellow),
-                const SizedBox(width: 5),
-                Text('$playerCoins'),
-              ],
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Consumer<CoinProvider>(
+              builder: (context, coinProvider, child) {
+                return Row(
+                  children: [
+                    Text(
+                      '${coinProvider.coins}', // Display current coin count
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 44,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.monetization_on,
+                        color: Color(0xFFFFC700),
+                        size: 50,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -910,18 +952,17 @@ class _EasyLevelState extends State<EasyLevel>
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
 
-
   @override
-    void initState() {
-      super.initState();
-      startTime();
+  void initState() {
+    super.initState();
+    startTime();
 
-      _animationController = AnimationController(
-        vsync: this,
-        duration: const Duration(seconds: 1),
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
     );
 
-      _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeInOut,
@@ -989,13 +1030,12 @@ class _EasyLevelState extends State<EasyLevel>
 
   void updateRow(int rowIndex, String newRowValue) {
     setState(() {
-        if (newRowValue.length != correctAnswers[rowIndex].length) {
+      if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
         for (int i = 0; i < crossword[rowIndex].length; i++) {
           crossword[rowIndex][i] = ''; // kolom akan tetap kosong
         }
         return;
-
       }
 
       List<String> newRow = newRowValue.split('');
@@ -1015,7 +1055,6 @@ class _EasyLevelState extends State<EasyLevel>
         statusMessage = 'BENAR!';
         statusColor = Colors.green;
         _animationController.forward(from: 0.0);
-
 
         remainingTime += 3;
         addScore1(5);
@@ -1125,7 +1164,9 @@ class _EasyLevelState extends State<EasyLevel>
             child: Center(
               child: Text('Waktu: $remainingTime detik',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 255, 255, 255))),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
           Padding(
@@ -1133,7 +1174,9 @@ class _EasyLevelState extends State<EasyLevel>
             child: Center(
               child: Text('Score: $score',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 255, 255, 255))),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
         ],
@@ -1158,7 +1201,8 @@ class _EasyLevelState extends State<EasyLevel>
                     return Row(
                       children:
                           List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor = const Color.fromARGB(255, 255, 255, 255);
+                        Color borderColor =
+                            const Color.fromARGB(255, 255, 255, 255);
 
                         if (isCorrectRow[rowIndex]) {
                           borderColor = Colors.green;
@@ -1185,7 +1229,8 @@ class _EasyLevelState extends State<EasyLevel>
                                     style: const TextStyle(
                                         fontSize: 24.0,
                                         fontWeight: FontWeight.bold,
-                                        color: Color.fromARGB(255, 255, 255, 255)),
+                                        color:
+                                            Color.fromARGB(255, 255, 255, 255)),
                                   ),
                                 ),
                               ),
@@ -1197,21 +1242,21 @@ class _EasyLevelState extends State<EasyLevel>
                   }),
                 ),
                 const SizedBox(height: 20),
-            AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: Text(
-                        statusMessage,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _opacityAnimation.value,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Text(
+                            statusMessage,
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
                             ),
                           ),
                         ),
@@ -1240,9 +1285,9 @@ class _MediumLevelState extends State<MediumLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 20;
+  int timerCount = 30;
   int score = 0;
-  int remainingTime = 20;
+  int remainingTime = 30;
 
   List<List<String>> correctAnswers = [
     ['J', 'E', 'R', 'U', 'K'],
@@ -1271,29 +1316,35 @@ class _MediumLevelState extends State<MediumLevel>
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
-  List<Offset> emotePositions = [];
-  List<IconData> emotes = [];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 100;
+  double statusMessageYPosition = 200;
 
-  late AnimationController _emoteController;
+  late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     startTime();
 
-    _emoteController = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 1),
     );
 
-    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
-        parent: _emoteController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
       ),
     );
   }
@@ -1302,7 +1353,7 @@ class _MediumLevelState extends State<MediumLevel>
   void dispose() {
     timer?.cancel();
     _focusNode.dispose();
-    _emoteController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -1353,8 +1404,9 @@ class _MediumLevelState extends State<MediumLevel>
     setState(() {
       if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
-        crossword[rowIndex].fillRange(0, crossword[rowIndex].length, '');
-        triggerSadEmotes();
+        for (int i = 0; i < crossword[rowIndex].length; i++) {
+          crossword[rowIndex][i] = ''; // kolom akan tetap kosong
+        }
         return;
       }
 
@@ -1372,77 +1424,24 @@ class _MediumLevelState extends State<MediumLevel>
         crossword[rowIndex] = List.from(correctAnswers[rowIndex]);
         isCorrectRow[rowIndex] = true;
         isRowWrong[rowIndex] = false;
-        triggerHappyEmotes();
-        remainingTime += 1;
-        addScore1(3);
+        statusMessage = 'BENAR!';
+        statusColor = Colors.green;
+        _animationController.forward(from: 0.0);
+
+        remainingTime += 3;
+        addScore1(5);
       } else {
         isRowWrong[rowIndex] = true;
         crossword[rowIndex].fillRange(0, crossword[rowIndex].length, '');
-        triggerSadEmotes();
+        statusMessage = 'SALAH!';
+        statusColor = const Color.fromARGB(255, 207, 17, 4);
+        _animationController.forward(from: 0.0);
       }
 
       if (isCorrectRow.every((row) => row)) {
         showFinalPopup(true);
       }
     });
-  }
-
-  void _animateStatusMessage() {
-    setState(() {
-      statusMessageYPosition = MediaQuery.of(context).size.height - 40;
-    });
-
-    Future.delayed(const Duration(milliseconds: 100), () {
-      setState(() {
-        statusMessageYPosition = 0;
-      });
-    });
-
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        statusMessage = '';
-      });
-    });
-  }
-
-  void triggerHappyEmotes() {
-    setState(() {
-      emotePositions.clear();
-      emotes.clear();
-      for (int i = 0; i < 5; i++) {
-        emotePositions.add(Offset(
-          MediaQuery.of(context).size.width / 5 * (i + 1) - 64,
-          MediaQuery.of(context).size.height - 400,
-        ));
-        emotes.add(Icons.emoji_emotions_outlined);
-      }
-      statusMessage = 'BENAR!';
-      statusColor = Colors.green;
-      _emoteController.reset();
-      _emoteController.forward();
-    });
-
-    _animateStatusMessage();
-  }
-
-  void triggerSadEmotes() {
-    setState(() {
-      emotePositions.clear();
-      emotes.clear();
-      for (int i = 0; i < 5; i++) {
-        emotePositions.add(Offset(
-          MediaQuery.of(context).size.width / 5 * (i + 1) - 64,
-          MediaQuery.of(context).size.height - 50,
-        ));
-        emotes.add(Icons.emoji_emotions);
-      }
-      statusMessage = 'SALAH!';
-      statusColor = const Color.fromARGB(255, 207, 17, 4);
-      _emoteController.reset();
-      _emoteController.forward();
-    });
-
-    _animateStatusMessage();
   }
 
   void showAnswerInputDialog(BuildContext context, int rowIndex) {
@@ -1517,14 +1516,29 @@ class _MediumLevelState extends State<MediumLevel>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 255, 255, 255),
+            size: 30,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Center(
               child: Text('Waktu: $remainingTime detik',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
           Padding(
@@ -1532,23 +1546,35 @@ class _MediumLevelState extends State<MediumLevel>
             child: Center(
               child: Text('Score: $score',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
         ],
       ),
       body: Stack(
         children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/image/1.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
+                const SizedBox(height: 100),
                 Column(
                   children: List.generate(crossword.length, (rowIndex) {
                     return Row(
                       children:
                           List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor = Colors.black;
+                        Color borderColor =
+                            const Color.fromARGB(255, 255, 255, 255);
 
                         if (isCorrectRow[rowIndex]) {
                           borderColor = Colors.green;
@@ -1574,7 +1600,9 @@ class _MediumLevelState extends State<MediumLevel>
                                     crossword[rowIndex][colIndex],
                                     style: const TextStyle(
                                         fontSize: 24.0,
-                                        fontWeight: FontWeight.bold),
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            Color.fromARGB(255, 255, 255, 255)),
                                   ),
                                 ),
                               ),
@@ -1585,43 +1613,30 @@ class _MediumLevelState extends State<MediumLevel>
                     );
                   }),
                 ),
-              ],
-            ),
-          ),
-          AnimatedBuilder(
-            animation: _emoteController,
-            builder: (context, child) {
-              return Stack(
-                children: List.generate(emotePositions.length, (index) {
-                  return Positioned(
-                    left: emotePositions[index].dx,
-                    top: emotePositions[index].dy -
-                        (MediaQuery.of(context).size.height *
-                            _emoteController.value),
-                    child: Opacity(
+                const SizedBox(height: 20),
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Opacity(
                       opacity: _opacityAnimation.value,
-                    ),
-                  );
-                }),
-              );
-            },
-          ),
-          AnimatedPositioned(
-            duration: const Duration(seconds: 1),
-            curve: Curves.easeInOut,
-            left: 0,
-            right: 0,
-            top: statusMessageYPosition,
-            child: Center(
-              child: Text(
-                statusMessage,
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
-                  fontFamily: 'FontdinerSwanky',
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Text(
+                            statusMessage,
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -1646,7 +1661,7 @@ class _HardLevelState extends State<HardLevel>
   int score = 0;
   int remainingTime = 30;
 
-    List<List<String>> correctAnswers = [
+  List<List<String>> correctAnswers = [
     ['L', 'A', 'P', 'T', 'O', 'P'],
     ['P', 'I', 'R', 'I', 'N', 'G'],
     ['A', 'U', 'D', 'R', 'E', 'Y'],
@@ -1673,29 +1688,35 @@ class _HardLevelState extends State<HardLevel>
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
-  List<Offset> emotePositions = [];
-  List<IconData> emotes = [];
   String statusMessage = '';
   Color statusColor = Colors.white;
   double statusMessageYPosition = 200;
 
-  late AnimationController _emoteController;
+  late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     startTime();
 
-    _emoteController = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 1),
     );
 
-    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
-        parent: _emoteController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeInOut),
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
       ),
     );
   }
@@ -1704,7 +1725,7 @@ class _HardLevelState extends State<HardLevel>
   void dispose() {
     timer?.cancel();
     _focusNode.dispose();
-    _emoteController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -1720,7 +1741,7 @@ class _HardLevelState extends State<HardLevel>
   }
 
   void showFinalPopup(bool isWin) {
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       showDialog(
         // ignore: use_build_context_synchronously
         context: context,
@@ -1755,8 +1776,9 @@ class _HardLevelState extends State<HardLevel>
     setState(() {
       if (newRowValue.length != correctAnswers[rowIndex].length) {
         isRowWrong[rowIndex] = true;
-        crossword[rowIndex].fillRange(0, crossword[rowIndex].length, '');
-        triggerSadEmotes();
+        for (int i = 0; i < crossword[rowIndex].length; i++) {
+          crossword[rowIndex][i] = ''; // kolom akan tetap kosong
+        }
         return;
       }
 
@@ -1774,77 +1796,24 @@ class _HardLevelState extends State<HardLevel>
         crossword[rowIndex] = List.from(correctAnswers[rowIndex]);
         isCorrectRow[rowIndex] = true;
         isRowWrong[rowIndex] = false;
-        triggerHappyEmotes();
+        statusMessage = 'BENAR!';
+        statusColor = Colors.green;
+        _animationController.forward(from: 0.0);
+
         remainingTime += 3;
         addScore1(5);
       } else {
         isRowWrong[rowIndex] = true;
         crossword[rowIndex].fillRange(0, crossword[rowIndex].length, '');
-        triggerSadEmotes();
+        statusMessage = 'SALAH!';
+        statusColor = const Color.fromARGB(255, 207, 17, 4);
+        _animationController.forward(from: 0.0);
       }
 
       if (isCorrectRow.every((row) => row)) {
         showFinalPopup(true);
       }
     });
-  }
-
-  void _animateStatusMessage() {
-    setState(() {
-      statusMessageYPosition = MediaQuery.of(context).size.height - 100;
-    });
-
-    Future.delayed(const Duration(milliseconds: 100), () {
-      setState(() {
-        statusMessageYPosition = 0;
-      });
-    });
-
-    Future.delayed(const Duration(seconds: 4), () {
-      setState(() {
-        statusMessage = '';
-      });
-    });
-  }
-
-  void triggerHappyEmotes() {
-    setState(() {
-      emotePositions.clear();
-      emotes.clear();
-      for (int i = 0; i < 5; i++) {
-        emotePositions.add(Offset(
-          MediaQuery.of(context).size.width / 5 * (i + 1) - 64,
-          MediaQuery.of(context).size.height - 100,
-        ));
-        emotes.add(Icons.emoji_emotions_outlined);
-      }
-      statusMessage = 'BENAR!';
-      statusColor = Colors.green;
-      _emoteController.reset();
-      _emoteController.forward();
-    });
-
-    _animateStatusMessage();
-  }
-
-  void triggerSadEmotes() {
-    setState(() {
-      emotePositions.clear();
-      emotes.clear();
-      for (int i = 0; i < 5; i++) {
-        emotePositions.add(Offset(
-          MediaQuery.of(context).size.width / 5 * (i + 1) - 64,
-          MediaQuery.of(context).size.height - 150,
-        ));
-        emotes.add(Icons.emoji_emotions);
-      }
-      statusMessage = 'SALAH!';
-      statusColor = const Color.fromARGB(255, 207, 17, 4);
-      _emoteController.reset();
-      _emoteController.forward();
-    });
-
-    _animateStatusMessage();
   }
 
   void showAnswerInputDialog(BuildContext context, int rowIndex) {
@@ -1919,14 +1888,29 @@ class _HardLevelState extends State<HardLevel>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 255, 255, 255),
+            size: 30,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Center(
               child: Text('Waktu: $remainingTime detik',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
           Padding(
@@ -1934,23 +1918,35 @@ class _HardLevelState extends State<HardLevel>
             child: Center(
               child: Text('Score: $score',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255))),
             ),
           ),
         ],
       ),
       body: Stack(
         children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/image/1.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
+                const SizedBox(height: 100),
                 Column(
                   children: List.generate(crossword.length, (rowIndex) {
                     return Row(
                       children:
                           List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor = Colors.black;
+                        Color borderColor =
+                            const Color.fromARGB(255, 255, 255, 255);
 
                         if (isCorrectRow[rowIndex]) {
                           borderColor = Colors.green;
@@ -1976,7 +1972,9 @@ class _HardLevelState extends State<HardLevel>
                                     crossword[rowIndex][colIndex],
                                     style: const TextStyle(
                                         fontSize: 24.0,
-                                        fontWeight: FontWeight.bold),
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            Color.fromARGB(255, 255, 255, 255)),
                                   ),
                                 ),
                               ),
@@ -1987,43 +1985,30 @@ class _HardLevelState extends State<HardLevel>
                     );
                   }),
                 ),
-              ],
-            ),
-          ),
-          AnimatedBuilder(
-            animation: _emoteController,
-            builder: (context, child) {
-              return Stack(
-                children: List.generate(emotePositions.length, (index) {
-                  return Positioned(
-                    left: emotePositions[index].dx,
-                    top: emotePositions[index].dy -
-                        (MediaQuery.of(context).size.height *
-                            _emoteController.value),
-                    child: Opacity(
+                const SizedBox(height: 20),
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Opacity(
                       opacity: _opacityAnimation.value,
-                    ),
-                  );
-                }),
-              );
-            },
-          ),
-          AnimatedPositioned(
-            duration: const Duration(seconds: 1),
-            curve: Curves.easeInOut,
-            left: 0,
-            right: 0,
-            top: statusMessageYPosition,
-            child: Center(
-              child: Text(
-                statusMessage,
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
-                  fontFamily: 'FontdinerSwanky',
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Text(
+                            statusMessage,
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
           ),
         ],

@@ -85,6 +85,10 @@ flutter:
     - assets/clothes/Kostum Superhero.png
     - assets/image/LOGO GEM DEV REVISI.png
     - assets/image/Background Galaxy.png
+    - assets/image/1.png
+    - assets/image/3.png
+    - assets/image/7.png
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
