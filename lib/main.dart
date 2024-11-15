@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:spacewordgame/provider.dart';
 import 'package:provider/provider.dart';
@@ -106,32 +105,6 @@ class Layout extends StatefulWidget {
 }
 
 class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  final List<_FallingStar> _stars = [];
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Create an animation controller for the stars
-    _controller = AnimationController(
-      duration: const Duration(seconds: 6), // Duration for full effect
-      vsync: this,
-    )..repeat(); // Loop animation
-
-    // Generate random stars
-    for (int i = 0; i < 15; i++) {
-      _stars.add(_FallingStar(
-          delayFactor: i * 0.1)); // Delay factor for sequential falling
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,154 +117,66 @@ class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
                 fit: BoxFit.cover,
               ),
             ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 55.0),
-                    child: Text(
-                      'Spaceword',
-                      style: TextStyle(
-                        fontFamily: 'FontdinerSwanky',
-                        color: const Color(0xFFFFF50B),
-                        fontSize: 50.0,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: const Offset(2.0, 2.0),
-                            blurRadius: 3.0,
-                            color: Colors.black.withOpacity(0.5),
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Level()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFAE0AFB),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 15),
-                      minimumSize: const Size(120, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(
-                          color: Color(0xFFD1BEDA),
-                          width: 7.0,
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 55.0),
+                  child: Text(
+                    'Spaceword',
+                    style: TextStyle(
+                      fontFamily: 'FontdinerSwanky',
+                      color: const Color(0xFFFFF50B),
+                      fontSize: 50.0,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          offset: const Offset(2.0, 2.0),
+                          blurRadius: 3.0,
+                          color: Colors.black.withOpacity(0.5),
                         ),
-                      ),
+                      ],
                     ),
-                    child: const Text(
-                      'Start',
-                      style: TextStyle(
-                        fontFamily: 'FontdinerSwanky',
-                        color: Color(0xFFFFF50B),
-                        fontSize: 25,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Level()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFAE0AFB),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 15),
+                    minimumSize: const Size(120, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(
+                        color: Color(0xFFD1BEDA),
+                        width: 7.0,
                       ),
                     ),
                   ),
-                ],
-              ),
+                  child: const Text(
+                    'Start',
+                    style: TextStyle(
+                      fontFamily: 'FontdinerSwanky',
+                      color: Color(0xFFFFF50B),
+                      fontSize: 25,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          // Add the falling star animation with smoke trails and bling effect
-          ..._stars.map((star) {
-            return AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                double animationValue =
-                    (_controller.value + star.delayFactor) % 1;
-
-                // Star and smoke trail
-                return Stack(
-                  children: [
-                    // Smoke trail behind the star
-                    Positioned(
-                      left: star.getXPosition(animationValue),
-                      top: star.getYPosition(animationValue) - star.size / 2,
-                      child: Opacity(
-                        opacity: 1 - animationValue, // Fades out as it falls
-                        child: Icon(
-                          Icons.circle,
-                          color: Colors.grey.withOpacity(0.2),
-                          size: star.size *
-                              1.5, // Slightly larger for the trail effect
-                        ),
-                      ),
-                    ),
-                    // Falling star with rotation, bling, and shadow
-                    Positioned(
-                      left: star.getXPosition(animationValue),
-                      top: star.getYPosition(animationValue),
-                      child: Transform.rotate(
-                        angle: animationValue * 2 * pi * star.rotationSpeed,
-                        child: Transform.scale(
-                          scale: 1 +
-                              0.3 *
-                                  sin(animationValue *
-                                      2 *
-                                      pi *
-                                      star.twinkleSpeed), // Enhanced bling
-                          child: Icon(
-                            Icons.star,
-                            color: Colors.white, // White for bright effect
-                            size: star.size,
-                            shadows: [
-                              Shadow(
-                                color: Colors.blueAccent
-                                    .withOpacity(0.7), // Glow shadow
-                                blurRadius: 10,
-                              ),
-                              Shadow(
-                                color: Colors.yellowAccent.withOpacity(0.5),
-                                blurRadius: 20,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          }),
         ],
       ),
     );
-  }
-}
-
-// Helper class for individual falling stars with added smoke trail and delay
-class _FallingStar {
-  final double size;
-  final double speed;
-  final double rotationSpeed;
-  final double twinkleSpeed;
-  final double delayFactor;
-
-  _FallingStar({required this.delayFactor})
-      : size = Random().nextDouble() * 8 +
-            8, // Random smaller size for more realism
-        speed = Random().nextDouble() * 2 + 0.5, // Random speed multiplier
-        rotationSpeed = Random().nextDouble() *
-            2, // Random rotation speed for asteroid effect
-        twinkleSpeed = Random().nextDouble() * 2 + 0.5; // Random twinkle speed
-
-  double getXPosition(double animationValue) {
-    return 400 -
-        animationValue * 600 * speed; // Diagonal movement from right to left
-  }
-
-  double getYPosition(double animationValue) {
-    return animationValue * 800 * speed; // Vertical downward movement
   }
 }
 
@@ -913,9 +798,9 @@ class _EasyLevelState extends State<EasyLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 30;
+  int timerCount = 45;
   int score = 0;
-  int remainingTime = 30;
+  int remainingTime = 45;
 
   List<List<String>> correctAnswers = [
     ['A', 'P', 'E', 'L'],
@@ -1285,9 +1170,9 @@ class _MediumLevelState extends State<MediumLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 30;
+  int timerCount = 35;
   int score = 0;
-  int remainingTime = 30;
+  int remainingTime = 35;
 
   List<List<String>> correctAnswers = [
     ['J', 'E', 'R', 'U', 'K'],
@@ -1558,7 +1443,7 @@ class _MediumLevelState extends State<MediumLevel>
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/image/1.png'),
+                image: AssetImage('assets/image/3.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -1930,7 +1815,7 @@ class _HardLevelState extends State<HardLevel>
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/image/1.png'),
+                image: AssetImage('assets/image/7.png'),
                 fit: BoxFit.cover,
               ),
             ),
