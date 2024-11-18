@@ -9,8 +9,8 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-            create: (_) => CoinProvider()), // Register CoinProvider
+        ChangeNotifierProvider(create: (_) => CoinProvider()),
+        ChangeNotifierProvider(create: (context) => CharacterProvider()),
       ],
       child: const MyApp(),
     ),
@@ -215,14 +215,14 @@ class Level extends StatelessWidget {
                         '${coinProvider.coins}', // Display current coin count
                         style: const TextStyle(
                           color: Color.fromARGB(255, 255, 255, 255),
-                          fontSize: 44,
+                          fontSize: 30,
                         ),
                       ),
                       IconButton(
                         icon: const Icon(
                           Icons.monetization_on,
                           color: Color(0xFFFFC700),
-                          size: 50,
+                          size: 30,
                         ),
                         onPressed: () {},
                       ),
@@ -399,7 +399,7 @@ class _CharacterCustomizationPageState
     extends State<CharacterCustomizationPage> {
   String selectedBody = 'assets/bodies/Alien Biru.png';
   String selectedClothes = 'assets/clothes/KOSTUM PENCURI.png';
-  int playerCoins = 1000;
+  int playerCoins = 0;
 
   final List<String> bodyAssets = [
     'assets/bodies/Alien Biru.png',
@@ -474,6 +474,10 @@ class _CharacterCustomizationPageState
       }
     });
     _saveCharacterPreferences();
+
+    final characterProvider =
+        Provider.of<CharacterProvider>(context, listen: false);
+    characterProvider.updateCharacter(selectedBody, selectedClothes);
   }
 
   void buyItem(int price, String item, String itemType) {
@@ -551,7 +555,7 @@ class _CharacterCustomizationPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customize Character'),
+        title: const Text('Customize'),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
@@ -573,14 +577,14 @@ class _CharacterCustomizationPageState
                       '${coinProvider.coins}', // Display current coin count
                       style: const TextStyle(
                         color: Colors.black,
-                        fontSize: 44,
+                        fontSize: 30,
                       ),
                     ),
                     IconButton(
                       icon: const Icon(
                         Icons.monetization_on,
                         color: Color(0xFFFFC700),
-                        size: 50,
+                        size: 30,
                       ),
                       onPressed: () {},
                     ),
@@ -1030,6 +1034,7 @@ class _EasyLevelState extends State<EasyLevel>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
@@ -1066,93 +1071,114 @@ class _EasyLevelState extends State<EasyLevel>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/image/1.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/image/1.png'),
+            fit: BoxFit.cover,
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 100),
-                Column(
-                  children: List.generate(crossword.length, (rowIndex) {
-                    return Row(
-                      children:
-                          List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor =
-                            const Color.fromARGB(255, 255, 255, 255);
+        ),
+        child: Column(children: [
+          Flexible(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 100),
+                  Column(
+                    children: List.generate(crossword.length, (rowIndex) {
+                      return Row(
+                        children: List.generate(crossword[rowIndex].length,
+                            (colIndex) {
+                          Color borderColor =
+                              const Color.fromARGB(255, 255, 255, 255);
 
-                        if (isCorrectRow[rowIndex]) {
-                          borderColor = Colors.green;
-                        } else if (isRowWrong[rowIndex]) {
-                          borderColor = Colors.red;
-                        }
+                          if (isCorrectRow[rowIndex]) {
+                            borderColor = Colors.green;
+                          } else if (isRowWrong[rowIndex]) {
+                            borderColor = Colors.red;
+                          }
 
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              showAnswerInputDialog(context, rowIndex);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(4.0),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: borderColor, width: 2.0),
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Center(
-                                  child: Text(
-                                    crossword[rowIndex][colIndex],
-                                    style: const TextStyle(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255)),
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                showAnswerInputDialog(context, rowIndex);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: borderColor, width: 2.0),
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Center(
+                                    child: Text(
+                                      crossword[rowIndex][colIndex],
+                                      style: const TextStyle(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color.fromARGB(
+                                              255, 255, 255, 255)),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 20),
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            statusMessage,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
+                          );
+                        }),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              statusMessage,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+          SingleChildScrollView(
+            child: Flexible(
+              flex: 1,
+              child: Consumer<CharacterProvider>(
+                builder: (context, characterProvider, child) {
+                  return Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(characterProvider.selectedBody,
+                            height: 180),
+                        Image.asset(characterProvider.selectedClothes,
+                            height: 180),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          )
+        ]),
       ),
     );
   }

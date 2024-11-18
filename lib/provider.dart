@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CoinProvider with ChangeNotifier {
-  int _coins = 3090;
+  int _coins = 2000;
 
   int get coins => _coins;
 
@@ -26,5 +26,19 @@ class CoinProvider with ChangeNotifier {
       return true;
     }
     return false;
+  }
+}
+
+class CharacterProvider with ChangeNotifier {
+  String _selectedBody = 'assets/bodies/Alien Biru.png';
+  String _selectedClothes = 'assets/clothes/KOSTUM PENCURI.png';
+
+  String get selectedBody => _selectedBody;
+  String get selectedClothes => _selectedClothes;
+
+  void updateCharacter(String body, String clothes) {
+    _selectedBody = body;
+    _selectedClothes = clothes;
+    notifyListeners();
   }
 }
