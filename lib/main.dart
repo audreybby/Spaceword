@@ -4,8 +4,17 @@ import 'package:spacewordgame/provider.dart';
 import 'package:provider/provider.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://hlqsmkwtutofteadzucr.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhscXNta3d0dXRvZnRlYWR6dWNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEyODgzMjMsImV4cCI6MjA0Njg2NDMyM30.LGomjikELn-o0-tAo15NH-BtAjsOtanN-r6xg3MpTD4',
+  );
+
   runApp(
     MultiProvider(
       providers: [
