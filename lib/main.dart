@@ -841,17 +841,15 @@ class _EasyLevelState extends State<EasyLevel>
     final supabase = Supabase.instance.client;
 
     try {
-      // Ambil 5 baris data secara acak
       final response = await supabase
           .from('questions')
           .select('question, answer, difficulty')
-          .eq('difficulty', 'easy') // Sesuaikan dengan tingkat kesulitan
-          .order('random()') // Urutkan secara acak
-          .limit(5); // Batasi ke 5 data saja
+          .eq('difficulty', 'easy')
+          .order('random()')
+          .limit(5);
 
       if (response.isNotEmpty) {
         setState(() {
-          // Simpan data ke dalam variabel untuk gameplay
           clues = response
               .map<String>((item) => item['question'] as String)
               .toList();
