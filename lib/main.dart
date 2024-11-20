@@ -56,7 +56,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Simulasi loading, bisa diatur sesuai kebutuhan
     Future.delayed(const Duration(seconds: 3), () {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
@@ -113,7 +112,7 @@ class Layout extends StatefulWidget {
   _LayoutState createState() => _LayoutState();
 }
 
-class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
+class _LayoutState extends State<Layout> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,7 +257,7 @@ class Level extends StatelessWidget {
           child: Center(
             child: Column(
               mainAxisAlignment:
-                  MainAxisAlignment.center, // kolom jadi vertikal
+                  MainAxisAlignment.center, // kolom jadi vertical
               children: [
                 const SizedBox(height: 80), // jarak atas layar dan tombol
                 SizedBox(
@@ -815,13 +814,7 @@ class _EasyLevelState extends State<EasyLevel>
   int score = 0;
   int remainingTime = 45;
 
-  List<List<String>> correctAnswers = [
-    ['A', 'P', 'E', 'L'],
-    ['R', 'U', 'S', 'A'],
-    ['U', 'A', 'N', 'G'],
-    ['M', 'A', 'T', 'A'],
-    ['J', 'A', 'U', 'H'],
-  ];
+  List<List<String>> correctAnswers = [];
 
   List<List<String>> crossword = [
     ['', '', '', ''],
@@ -831,13 +824,7 @@ class _EasyLevelState extends State<EasyLevel>
     ['', '', '', ''],
   ];
 
-  List<String> clues = [
-    "Buah yang dimakan snow white",
-    "Hewan yang memiliki tanduk",
-    "Alat yang digunakan untuk jual beli",
-    "Melihat dengan menggunakan ...",
-    "Lawan kata dekat",
-  ];
+  List<String> clues = [];
 
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
@@ -850,9 +837,40 @@ class _EasyLevelState extends State<EasyLevel>
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
 
+  Future<void> fetchRandomQuestions() async {
+    final supabase = Supabase.instance.client;
+
+    try {
+      // Ambil 5 baris data secara acak
+      final response = await supabase
+          .from('questions')
+          .select('question, answer, difficulty')
+          .eq('difficulty', 'easy') // Sesuaikan dengan tingkat kesulitan
+          .order('random()') // Urutkan secara acak
+          .limit(5); // Batasi ke 5 data saja
+
+      if (response.isNotEmpty) {
+        setState(() {
+          // Simpan data ke dalam variabel untuk gameplay
+          clues = response
+              .map<String>((item) => item['question'] as String)
+              .toList();
+          correctAnswers = response.map<List<String>>((item) {
+            final answer = item['answer'] as String;
+            return answer.split('');
+          }).toList();
+        });
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error fetching random questions: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    fetchRandomQuestions();
     startTime();
 
     _animationController = AnimationController(
@@ -887,6 +905,10 @@ class _EasyLevelState extends State<EasyLevel>
     setState(() {
       score += points;
     });
+
+    //menambahkan coin sesuai dengan skor
+    int coinsToAdd = points; // Langsung menyamakan jumlah koin dengan skor
+    Provider.of<CoinProvider>(context, listen: false).addCoins(coinsToAdd);
 
     if (isCorrectRow.every((row) => row)) {
       showFinalPopup(true);
@@ -1205,9 +1227,9 @@ class _MediumLevelState extends State<MediumLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 35;
+  int timerCount = 45;
   int score = 0;
-  int remainingTime = 35;
+  int remainingTime = 45;
 
   List<List<String>> correctAnswers = [
     ['J', 'E', 'R', 'U', 'K'],
@@ -1282,6 +1304,10 @@ class _MediumLevelState extends State<MediumLevel>
       score += points;
     });
 
+    //menambahkan coin sesuai dengan skor
+    int coinsToAdd = points; // Langsung menyamakan jumlah koin dengan skor
+    Provider.of<CoinProvider>(context, listen: false).addCoins(coinsToAdd);
+
     if (isCorrectRow.every((row) => row)) {
       showFinalPopup(true);
       timer?.cancel();
@@ -1437,6 +1463,7 @@ class _MediumLevelState extends State<MediumLevel>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
@@ -1473,93 +1500,114 @@ class _MediumLevelState extends State<MediumLevel>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/image/3.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/image/1.png'),
+            fit: BoxFit.cover,
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 100),
-                Column(
-                  children: List.generate(crossword.length, (rowIndex) {
-                    return Row(
-                      children:
-                          List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor =
-                            const Color.fromARGB(255, 255, 255, 255);
+        ),
+        child: Column(children: [
+          Flexible(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 100),
+                  Column(
+                    children: List.generate(crossword.length, (rowIndex) {
+                      return Row(
+                        children: List.generate(crossword[rowIndex].length,
+                            (colIndex) {
+                          Color borderColor =
+                              const Color.fromARGB(255, 255, 255, 255);
 
-                        if (isCorrectRow[rowIndex]) {
-                          borderColor = Colors.green;
-                        } else if (isRowWrong[rowIndex]) {
-                          borderColor = Colors.red;
-                        }
+                          if (isCorrectRow[rowIndex]) {
+                            borderColor = Colors.green;
+                          } else if (isRowWrong[rowIndex]) {
+                            borderColor = Colors.red;
+                          }
 
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              showAnswerInputDialog(context, rowIndex);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(4.0),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: borderColor, width: 2.0),
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Center(
-                                  child: Text(
-                                    crossword[rowIndex][colIndex],
-                                    style: const TextStyle(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255)),
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                showAnswerInputDialog(context, rowIndex);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: borderColor, width: 2.0),
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Center(
+                                    child: Text(
+                                      crossword[rowIndex][colIndex],
+                                      style: const TextStyle(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color.fromARGB(
+                                              255, 255, 255, 255)),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 20),
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            statusMessage,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
+                          );
+                        }),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              statusMessage,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+          SingleChildScrollView(
+            child: Flexible(
+              flex: 1,
+              child: Consumer<CharacterProvider>(
+                builder: (context, characterProvider, child) {
+                  return Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(characterProvider.selectedBody,
+                            height: 180),
+                        Image.asset(characterProvider.selectedClothes,
+                            height: 180),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          )
+        ]),
       ),
     );
   }
@@ -1577,9 +1625,9 @@ class _HardLevelState extends State<HardLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 30;
+  int timerCount = 45;
   int score = 0;
-  int remainingTime = 30;
+  int remainingTime = 45;
 
   List<List<String>> correctAnswers = [
     ['L', 'A', 'P', 'T', 'O', 'P'],
@@ -1654,6 +1702,10 @@ class _HardLevelState extends State<HardLevel>
       score += points;
     });
 
+    //menambahkan coin sesuai dengan skor
+    int coinsToAdd = points; // Langsung menyamakan jumlah koin dengan skor
+    Provider.of<CoinProvider>(context, listen: false).addCoins(coinsToAdd);
+
     if (isCorrectRow.every((row) => row)) {
       showFinalPopup(true);
       timer?.cancel();
@@ -1809,6 +1861,7 @@ class _HardLevelState extends State<HardLevel>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
@@ -1845,93 +1898,114 @@ class _HardLevelState extends State<HardLevel>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/image/7.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/image/1.png'),
+            fit: BoxFit.cover,
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 100),
-                Column(
-                  children: List.generate(crossword.length, (rowIndex) {
-                    return Row(
-                      children:
-                          List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor =
-                            const Color.fromARGB(255, 255, 255, 255);
+        ),
+        child: Column(children: [
+          Flexible(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 100),
+                  Column(
+                    children: List.generate(crossword.length, (rowIndex) {
+                      return Row(
+                        children: List.generate(crossword[rowIndex].length,
+                            (colIndex) {
+                          Color borderColor =
+                              const Color.fromARGB(255, 255, 255, 255);
 
-                        if (isCorrectRow[rowIndex]) {
-                          borderColor = Colors.green;
-                        } else if (isRowWrong[rowIndex]) {
-                          borderColor = Colors.red;
-                        }
+                          if (isCorrectRow[rowIndex]) {
+                            borderColor = Colors.green;
+                          } else if (isRowWrong[rowIndex]) {
+                            borderColor = Colors.red;
+                          }
 
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              showAnswerInputDialog(context, rowIndex);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(4.0),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: borderColor, width: 2.0),
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Center(
-                                  child: Text(
-                                    crossword[rowIndex][colIndex],
-                                    style: const TextStyle(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255)),
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                showAnswerInputDialog(context, rowIndex);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: borderColor, width: 2.0),
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Center(
+                                    child: Text(
+                                      crossword[rowIndex][colIndex],
+                                      style: const TextStyle(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color.fromARGB(
+                                              255, 255, 255, 255)),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 20),
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            statusMessage,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
+                          );
+                        }),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              statusMessage,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+          SingleChildScrollView(
+            child: Flexible(
+              flex: 1,
+              child: Consumer<CharacterProvider>(
+                builder: (context, characterProvider, child) {
+                  return Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(characterProvider.selectedBody,
+                            height: 180),
+                        Image.asset(characterProvider.selectedClothes,
+                            height: 180),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          )
+        ]),
       ),
     );
   }
