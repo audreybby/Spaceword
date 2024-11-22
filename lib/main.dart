@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:spacewordgame/provider.dart';
 import 'package:provider/provider.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spacewordgame/audioplayers.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,7 +116,41 @@ class Layout extends StatefulWidget {
   _LayoutState createState() => _LayoutState();
 }
 
-class _LayoutState extends State<Layout> with TickerProviderStateMixin {
+class _LayoutState extends State<Layout> with WidgetsBindingObserver {
+  final AudioService _audioService = AudioService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Daftarkan observer untuk mendeteksi lifecycle aplikasi
+    WidgetsBinding.instance.addObserver(this);
+
+    // Mulai memainkan musik latar
+    _audioService.playBackgroundMusic('sound/backsound.mp3');
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Logika untuk menghentikan/melanjutkan musik berdasarkan status aplikasi
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      // Hentikan musik saat aplikasi tidak aktif atau dijeda
+      _audioService.stopMusic();
+    } else if (state == AppLifecycleState.resumed) {
+      // Mulai kembali musik saat aplikasi aktif kembali
+      _audioService.playBackgroundMusic('sound/backsound.mp3');
+    }
+  }
+
+  @override
+  void dispose() {
+    // Hapus observer dan hentikan musik saat halaman dihapus
+    WidgetsBinding.instance.removeObserver(this);
+    _audioService.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -802,7 +840,6 @@ class EasyLevel extends StatefulWidget {
   const EasyLevel({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _EasyLevelState createState() => _EasyLevelState();
 }
 
@@ -815,7 +852,7 @@ class _EasyLevelState extends State<EasyLevel>
   int remainingTime = 45;
 
   List<List<String>> correctAnswers = [];
-
+  List<String> clues = [];
   List<List<String>> crossword = [
     ['', '', '', ''],
     ['', '', '', ''],
@@ -824,53 +861,21 @@ class _EasyLevelState extends State<EasyLevel>
     ['', '', '', ''],
   ];
 
-  List<String> clues = [];
-
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 200;
 
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
   late Animation<double> _scaleAnimation;
 
-  Future<void> fetchRandomQuestions() async {
-    final supabase = Supabase.instance.client;
-
-    try {
-      final response = await supabase
-          .from('questions')
-          .select('question, answer, difficulty')
-          .eq('difficulty', 'easy')
-          .order('random()')
-          .limit(5);
-
-      if (response.isNotEmpty) {
-        setState(() {
-          clues = response
-              .map<String>((item) => item['question'] as String)
-              .toList();
-          correctAnswers = response.map<List<String>>((item) {
-            final answer = item['answer'] as String;
-            return answer.split('');
-          }).toList();
-        });
-      }
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error fetching random questions: $e');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    fetchRandomQuestions();
+    loadQuestions();
     startTime();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -889,6 +894,26 @@ class _EasyLevelState extends State<EasyLevel>
         curve: Curves.easeInOut,
       ),
     );
+  }
+
+  Future<void> loadQuestions() async {
+    final String response =
+        await rootBundle.loadString('assets/questions/easy.json');
+    final data = json.decode(response);
+
+    setState(() {
+      // Mendapatkan daftar soal
+      final List<dynamic> questions = data['questions'];
+
+      // Mengacak urutan soal
+      questions.shuffle(Random());
+
+      // Memisahkan petunjuk dan jawaban setelah diacak
+      clues = List<String>.from(questions.map((q) => q['clue']));
+      correctAnswers = List<List<String>>.from(
+        questions.map((q) => List<String>.from(q['answer'])),
+      );
+    });
   }
 
   @override
@@ -1217,7 +1242,6 @@ class MediumLevel extends StatefulWidget {
   const MediumLevel({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _MediumLevelState createState() => _MediumLevelState();
 }
 
@@ -1229,14 +1253,8 @@ class _MediumLevelState extends State<MediumLevel>
   int score = 0;
   int remainingTime = 45;
 
-  List<List<String>> correctAnswers = [
-    ['J', 'E', 'R', 'U', 'K'],
-    ['H', 'U', 'T', 'A', 'N'],
-    ['S', 'I', 'N', 'G', 'A'],
-    ['M', 'A', 'L', 'A', 'M'],
-    ['D', 'E', 'N', 'D', 'A'],
-  ];
-
+  List<List<String>> correctAnswers = [];
+  List<String> clues = [];
   List<List<String>> crossword = [
     ['', '', '', '', ''],
     ['', '', '', '', ''],
@@ -1245,20 +1263,11 @@ class _MediumLevelState extends State<MediumLevel>
     ['', '', '', '', ''],
   ];
 
-  List<String> clues = [
-    "Jenis buah yang identik dengan vitamin C",
-    "Ekosistem yang terdiri dari pohon dan tumbuhan",
-    "Raja hewan yang dikenal dengan nama “King of the Jungle”",
-    "Waktu untuk istirahat dan tidur",
-    "Sejumlah uang yang harus dibayar sebagai sanksi karena melanggar aturan",
-  ];
-
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 200;
 
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
@@ -1267,8 +1276,8 @@ class _MediumLevelState extends State<MediumLevel>
   @override
   void initState() {
     super.initState();
+    loadQuestions();
     startTime();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -1287,6 +1296,26 @@ class _MediumLevelState extends State<MediumLevel>
         curve: Curves.easeInOut,
       ),
     );
+  }
+
+  Future<void> loadQuestions() async {
+    final String response =
+        await rootBundle.loadString('assets/questions/medium.json');
+    final data = json.decode(response);
+
+    setState(() {
+      // Mendapatkan daftar soal
+      final List<dynamic> questions = data['questions'];
+
+      // Mengacak urutan soal
+      questions.shuffle(Random());
+
+      // Memisahkan petunjuk dan jawaban setelah diacak
+      clues = List<String>.from(questions.map((q) => q['clue']));
+      correctAnswers = List<List<String>>.from(
+        questions.map((q) => List<String>.from(q['answer'])),
+      );
+    });
   }
 
   @override
@@ -1501,7 +1530,7 @@ class _MediumLevelState extends State<MediumLevel>
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/image/1.png'),
+            image: AssetImage('assets/image/3.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -1615,7 +1644,6 @@ class HardLevel extends StatefulWidget {
   const HardLevel({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _HardLevelState createState() => _HardLevelState();
 }
 
@@ -1627,14 +1655,8 @@ class _HardLevelState extends State<HardLevel>
   int score = 0;
   int remainingTime = 45;
 
-  List<List<String>> correctAnswers = [
-    ['L', 'A', 'P', 'T', 'O', 'P'],
-    ['P', 'I', 'R', 'I', 'N', 'G'],
-    ['A', 'U', 'D', 'R', 'E', 'Y'],
-    ['K', 'E', 'R', 'E', 'T', 'A'],
-    ['T', 'A', 'N', 'G', 'A', 'N'],
-  ];
-
+  List<List<String>> correctAnswers = [];
+  List<String> clues = [];
   List<List<String>> crossword = [
     ['', '', '', '', '', ''],
     ['', '', '', '', '', ''],
@@ -1643,20 +1665,11 @@ class _HardLevelState extends State<HardLevel>
     ['', '', '', '', '', ''],
   ];
 
-  List<String> clues = [
-    "Gue ngoding paake apa rek",
-    "Alas makan",
-    "Nama programmer roblox",
-    "Transportasi yang berjalan diatas rel",
-    "Anggota badan yang digunakan untuk membawa barang",
-  ];
-
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 200;
 
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
@@ -1665,8 +1678,8 @@ class _HardLevelState extends State<HardLevel>
   @override
   void initState() {
     super.initState();
+    loadQuestions();
     startTime();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -1685,6 +1698,26 @@ class _HardLevelState extends State<HardLevel>
         curve: Curves.easeInOut,
       ),
     );
+  }
+
+  Future<void> loadQuestions() async {
+    final String response =
+        await rootBundle.loadString('assets/questions/hard.json');
+    final data = json.decode(response);
+
+    setState(() {
+      // Mendapatkan daftar soal
+      final List<dynamic> questions = data['questions'];
+
+      // Mengacak urutan soal
+      questions.shuffle(Random());
+
+      // Memisahkan petunjuk dan jawaban setelah diacak
+      clues = List<String>.from(questions.map((q) => q['clue']));
+      correctAnswers = List<List<String>>.from(
+        questions.map((q) => List<String>.from(q['answer'])),
+      );
+    });
   }
 
   @override
@@ -1899,7 +1932,7 @@ class _HardLevelState extends State<HardLevel>
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/image/1.png'),
+            image: AssetImage('assets/image/7.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -2012,10 +2045,12 @@ class _HardLevelState extends State<HardLevel>
 class LosePopup extends StatefulWidget {
   final int score;
 
-  const LosePopup({super.key, required this.score});
+  const LosePopup({
+    super.key,
+    required this.score,
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
   _LosePopupState createState() => _LosePopupState();
 }
 
@@ -2044,8 +2079,6 @@ class _LosePopupState extends State<LosePopup>
     super.dispose();
   }
 
-  static const IconData person = IconData(0xe491, fontFamily: 'MaterialIcons');
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -2055,6 +2088,7 @@ class _LosePopupState extends State<LosePopup>
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
+            // Kotak utama LosePopup
             Container(
               width: 300,
               height: 320,
@@ -2069,8 +2103,22 @@ class _LosePopupState extends State<LosePopup>
                     top: 50,
                     child: Column(
                       children: [
-                        const Icon(person, size: 140, color: Colors.black),
-                        const SizedBox(height: 1),
+                        // Menggunakan Consumer untuk mengakses data karakter
+                        Consumer<CharacterProvider>(
+                          builder: (context, characterProvider, child) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.asset(characterProvider.selectedBody,
+                                    width: 140),
+                                Image.asset(characterProvider.selectedClothes,
+                                    width: 140),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        // Username dan skor
                         const Text(
                           "Username",
                           style: TextStyle(
@@ -2202,7 +2250,6 @@ class WinPopup extends StatefulWidget {
   const WinPopup({super.key, required this.score});
 
   @override
-  // ignore: library_private_types_in_public_api
   _WinPopupState createState() => _WinPopupState();
 }
 
@@ -2231,8 +2278,6 @@ class _WinPopupState extends State<WinPopup>
     super.dispose();
   }
 
-  static const IconData person = IconData(0xe491, fontFamily: 'MaterialIcons');
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -2256,8 +2301,25 @@ class _WinPopupState extends State<WinPopup>
                     top: 50,
                     child: Column(
                       children: [
-                        const Icon(person, size: 140, color: Colors.black),
-                        const SizedBox(height: 1),
+                        // Menggunakan Consumer untuk menampilkan karakter
+                        Consumer<CharacterProvider>(
+                          builder: (context, characterProvider, child) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.asset(
+                                  characterProvider.selectedBody,
+                                  height: 140,
+                                ),
+                                Image.asset(
+                                  characterProvider.selectedClothes,
+                                  height: 140,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
                         const Text(
                           "Username",
                           style: TextStyle(
