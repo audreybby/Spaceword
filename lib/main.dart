@@ -840,6 +840,7 @@ class EasyLevel extends StatefulWidget {
   const EasyLevel({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _EasyLevelState createState() => _EasyLevelState();
 }
 
@@ -1242,6 +1243,8 @@ class MediumLevel extends StatefulWidget {
   const MediumLevel({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
+  // ignore: library_private_types_in_public_api
   _MediumLevelState createState() => _MediumLevelState();
 }
 
@@ -1644,6 +1647,7 @@ class HardLevel extends StatefulWidget {
   const HardLevel({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _HardLevelState createState() => _HardLevelState();
 }
 
@@ -2051,6 +2055,8 @@ class LosePopup extends StatefulWidget {
   });
 
   @override
+  // ignore: library_private_types_in_public_api
+  // ignore: library_private_types_in_public_api
   _LosePopupState createState() => _LosePopupState();
 }
 
@@ -2110,23 +2116,15 @@ class _LosePopupState extends State<LosePopup>
                               alignment: Alignment.center,
                               children: [
                                 Image.asset(characterProvider.selectedBody,
-                                    width: 140),
+                                    width: 160),
                                 Image.asset(characterProvider.selectedClothes,
-                                    width: 140),
+                                    width: 160),
                               ],
                             );
                           },
                         ),
                         const SizedBox(height: 8),
                         // Username dan skor
-                        const Text(
-                          "Username",
-                          style: TextStyle(
-                            fontSize: 25,
-                            color: Colors.purple,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
                         const SizedBox(height: 2),
                         Text(
                           "Score: ${widget.score}",
@@ -2250,6 +2248,7 @@ class WinPopup extends StatefulWidget {
   const WinPopup({super.key, required this.score});
 
   @override
+  // ignore: library_private_types_in_public_api
   _WinPopupState createState() => _WinPopupState();
 }
 
@@ -2309,25 +2308,17 @@ class _WinPopupState extends State<WinPopup>
                               children: [
                                 Image.asset(
                                   characterProvider.selectedBody,
-                                  height: 140,
+                                  height: 160,
                                 ),
                                 Image.asset(
                                   characterProvider.selectedClothes,
-                                  height: 140,
+                                  height: 160,
                                 ),
                               ],
                             );
                           },
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          "Username",
-                          style: TextStyle(
-                            fontSize: 25,
-                            color: Colors.purple,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
                         const SizedBox(height: 2),
                         Text(
                           "Score: ${widget.score}",
