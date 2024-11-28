@@ -1,4 +1,4 @@
-# spacewordgame
+# Spaceword
 
 A new Flutter project.
 

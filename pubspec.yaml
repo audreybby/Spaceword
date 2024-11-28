@@ -1,5 +1,5 @@
-name: spacewordgame
-description: "A new Flutter project."
+name: spaceword
+description: 'Fun word game with amazing space view you can play with friends!'
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -33,11 +33,9 @@ dependencies:
   shared_preferences: ^2.0.15
   provider: ^6.0.0
   supabase_flutter: ^2.0.0
-
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  flutter_dotenv: ^5.1.0
+  import_sorter: ^4.6.0
+  # cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
@@ -45,35 +43,28 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_lints: ^4.0.0
 
-
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/image/Icon Game.png"
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
+import_sorter:
+  comments: false # Optional, defaults to true
+  # emojis: true # Optional, defaults to false
+  # ignored_files: # Optional, defaults to []
+  #   - \/lib\/*
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
   fonts:
     - family: FontdinerSwanky
       fonts:
         - asset: assets/fonts/FontdinerSwanky-Regular.ttf
-  
+
   assets:
+    - .env
     - assets/bodies/Alien Biru.png
     - assets/bodies/Alien Hijau.png
     - assets/bodies/Alien Pink.png
@@ -96,7 +87,6 @@ flutter:
     - assets/image/1.png
     - assets/image/3.png
     - assets/image/7.png
-
 
   # To add assets to your application, add an assets section, like this:
   # assets:
