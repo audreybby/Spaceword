@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:spacewordgame/provider.dart';
 import 'package:provider/provider.dart';
+import 'package:spacewordgame/login_page.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
       ),
-      home: const SplashScreen(),
+      home: const LoginPage(),
     );
   }
 }
@@ -55,8 +56,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  get image => null;
-
   @override
   void initState() {
     super.initState();
@@ -64,7 +63,8 @@ class _SplashScreenState extends State<SplashScreen> {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const Layout(),
+          builder: (context) =>
+              const LoginPage(), // Ganti ke halaman berikutnya
         ),
       );
     });
@@ -79,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
             colors: [
               Color(0xFF0D006F),
               Color(0xFF9614D0),
-            ], // Warna gradasi
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -88,7 +88,6 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              // Logo splash screen
               Image.asset(
                 'assets/image/LOGO GEM DEV REVISI.png',
                 width: 170,
@@ -100,16 +99,12 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
-
-  logoFlutter({required int size}) {}
-}
-
-class Logo {
-  const Logo({required int size});
 }
 
 class Layout extends StatefulWidget {
-  const Layout({super.key});
+  final dynamic userData;
+
+  const Layout({super.key, required this.userData});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -246,7 +241,10 @@ class Level extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const Layout()),
+                MaterialPageRoute(
+                    builder: (context) => const Layout(
+                          userData: null,
+                        )),
               );
             },
           ),
@@ -2215,7 +2213,10 @@ class _LosePopupState extends State<LosePopup>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Layout()),
+                        MaterialPageRoute(
+                            builder: (context) => const Layout(
+                                  userData: null,
+                                )),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -2409,7 +2410,10 @@ class _WinPopupState extends State<WinPopup>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Layout()),
+                        MaterialPageRoute(
+                            builder: (context) => const Layout(
+                                  userData: null,
+                                )),
                       );
                     },
                     style: ElevatedButton.styleFrom(

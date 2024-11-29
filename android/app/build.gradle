@@ -30,6 +30,15 @@ android {
         versionName = flutter.versionName
     }
 
+signingConfigs {
+        release {
+            storeFile file('release-key.jks')
+            storePassword "gemdevteams9"
+            keyAlias "keyalias"
+            keyPassword "gemdevteams9"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
