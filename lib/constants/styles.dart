@@ -28,10 +28,3 @@ const TextStyle welcomeTextStyle = TextStyle(
     ),
   ],
 );
-
-// Text Styles
-const TextStyle customButtonStyle = TextStyle(
-  fontFamily: 'FontdinerSwanky',
-  color: customButtonColor,
-  fontSize: 25,
-);

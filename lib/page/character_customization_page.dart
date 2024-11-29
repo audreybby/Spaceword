@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 import 'package:spaceword/provider.dart';
+
+final supabase = Supabase.instance.client;
+final activeSession = supabase.auth.currentSession;
 
 class CharacterCustomizationPage extends StatefulWidget {
   const CharacterCustomizationPage({super.key});
@@ -63,6 +67,9 @@ class _CharacterCustomizationPageState
   void initState() {
     super.initState();
     _loadCharacterPreferences();
+    if (activeSession == null) {
+      Navigator.pushNamed(context, '/auth');
+    }
   }
 
   Future<void> _loadCharacterPreferences() async {
@@ -218,6 +225,17 @@ class _CharacterCustomizationPageState
       ),
       body: Column(
         children: [
+          // ! FIXME: signout not working
+          // TODO: move signout button (eg. to separate settings page)
+          const SizedBox(height: 24.0),
+          ElevatedButton(
+            onPressed: () async {
+              await supabase.auth.signOut();
+              Navigator.pushNamed(context, '/');
+            },
+            child: const Text('Sign out'),
+          ),
+
           Expanded(
             flex: 3,
             child: Center(

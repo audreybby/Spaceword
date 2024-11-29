@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 
 import 'package:spaceword/constants/styles.dart';
 import 'package:spaceword/page/character_customization_page.dart';
+import 'package:spaceword/page/level_page.dart';
 import 'package:spaceword/page/welcome_page.dart';
 import 'package:spaceword/provider.dart';
 import 'package:spaceword/ui/level_button.dart';
-import 'package:spaceword/page/level_page.dart';
 
 class ChooseLevelPage extends StatelessWidget {
   const ChooseLevelPage({super.key});
