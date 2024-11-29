@@ -42,7 +42,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
       ),
-      home: const LoginPage(),
+      // home: const LoginPage(),
+      home: const SplashScreen(),
     );
   }
 }
@@ -63,8 +64,8 @@ class _SplashScreenState extends State<SplashScreen> {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) =>
-              const LoginPage(), // Ganti ke halaman berikutnya
+          builder: (context) => const Layout(userData: null),
+          // builder: (context) => const LoginPage(), // Ganti ke halaman berikutnya
         ),
       );
     });
