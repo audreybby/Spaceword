@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:spacewordgame/provider.dart';
 import 'package:provider/provider.dart';
+import 'package:spacewordgame/login_page.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spacewordgame/audioplayers.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +42,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
       ),
-      home: const SplashScreen(),
+      home: const LoginPage(),
     );
   }
 }
@@ -51,17 +56,15 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  get image => null;
-
   @override
   void initState() {
     super.initState();
-    // Simulasi loading, bisa diatur sesuai kebutuhan
     Future.delayed(const Duration(seconds: 3), () {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const Layout(),
+          builder: (context) =>
+              const LoginPage(), // Ganti ke halaman berikutnya
         ),
       );
     });
@@ -76,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
             colors: [
               Color(0xFF0D006F),
               Color(0xFF9614D0),
-            ], // Warna gradasi
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -85,7 +88,6 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              // Logo splash screen
               Image.asset(
                 'assets/image/LOGO GEM DEV REVISI.png',
                 width: 170,
@@ -97,23 +99,53 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
-
-  logoFlutter({required int size}) {}
-}
-
-class Logo {
-  const Logo({required int size});
 }
 
 class Layout extends StatefulWidget {
-  const Layout({super.key});
+  final dynamic userData;
+
+  const Layout({super.key, required this.userData});
 
   @override
   // ignore: library_private_types_in_public_api
   _LayoutState createState() => _LayoutState();
 }
 
-class _LayoutState extends State<Layout> with SingleTickerProviderStateMixin {
+class _LayoutState extends State<Layout> with WidgetsBindingObserver {
+  final AudioService _audioService = AudioService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Daftarkan observer untuk mendeteksi lifecycle aplikasi
+    WidgetsBinding.instance.addObserver(this);
+
+    // Mulai memainkan musik latar
+    _audioService.playBackgroundMusic('sound/backsound.mp3');
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Logika untuk menghentikan/melanjutkan musik berdasarkan status aplikasi
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      // Hentikan musik saat aplikasi tidak aktif atau dijeda
+      _audioService.stopMusic();
+    } else if (state == AppLifecycleState.resumed) {
+      // Mulai kembali musik saat aplikasi aktif kembali
+      _audioService.playBackgroundMusic('sound/backsound.mp3');
+    }
+  }
+
+  @override
+  void dispose() {
+    // Hapus observer dan hentikan musik saat halaman dihapus
+    WidgetsBinding.instance.removeObserver(this);
+    _audioService.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,7 +241,10 @@ class Level extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const Layout()),
+                MaterialPageRoute(
+                    builder: (context) => const Layout(
+                          userData: null,
+                        )),
               );
             },
           ),
@@ -258,7 +293,7 @@ class Level extends StatelessWidget {
           child: Center(
             child: Column(
               mainAxisAlignment:
-                  MainAxisAlignment.center, // kolom jadi vertikal
+                  MainAxisAlignment.center, // kolom jadi vertical
               children: [
                 const SizedBox(height: 80), // jarak atas layar dan tombol
                 SizedBox(
@@ -815,14 +850,8 @@ class _EasyLevelState extends State<EasyLevel>
   int score = 0;
   int remainingTime = 45;
 
-  List<List<String>> correctAnswers = [
-    ['A', 'P', 'E', 'L'],
-    ['R', 'U', 'S', 'A'],
-    ['U', 'A', 'N', 'G'],
-    ['M', 'A', 'T', 'A'],
-    ['J', 'A', 'U', 'H'],
-  ];
-
+  List<List<String>> correctAnswers = [];
+  List<String> clues = [];
   List<List<String>> crossword = [
     ['', '', '', ''],
     ['', '', '', ''],
@@ -831,20 +860,11 @@ class _EasyLevelState extends State<EasyLevel>
     ['', '', '', ''],
   ];
 
-  List<String> clues = [
-    "Buah yang dimakan snow white",
-    "Hewan yang memiliki tanduk",
-    "Alat yang digunakan untuk jual beli",
-    "Melihat dengan menggunakan ...",
-    "Lawan kata dekat",
-  ];
-
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 200;
 
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
@@ -853,8 +873,8 @@ class _EasyLevelState extends State<EasyLevel>
   @override
   void initState() {
     super.initState();
+    loadQuestions();
     startTime();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -875,6 +895,26 @@ class _EasyLevelState extends State<EasyLevel>
     );
   }
 
+  Future<void> loadQuestions() async {
+    final String response =
+        await rootBundle.loadString('assets/questions/easy.json');
+    final data = json.decode(response);
+
+    setState(() {
+      // Mendapatkan daftar soal
+      final List<dynamic> questions = data['questions'];
+
+      // Mengacak urutan soal
+      questions.shuffle(Random());
+
+      // Memisahkan petunjuk dan jawaban setelah diacak
+      clues = List<String>.from(questions.map((q) => q['clue']));
+      correctAnswers = List<List<String>>.from(
+        questions.map((q) => List<String>.from(q['answer'])),
+      );
+    });
+  }
+
   @override
   void dispose() {
     timer?.cancel();
@@ -887,6 +927,10 @@ class _EasyLevelState extends State<EasyLevel>
     setState(() {
       score += points;
     });
+
+    //menambahkan coin sesuai dengan skor
+    int coinsToAdd = points; // Langsung menyamakan jumlah koin dengan skor
+    Provider.of<CoinProvider>(context, listen: false).addCoins(coinsToAdd);
 
     if (isCorrectRow.every((row) => row)) {
       showFinalPopup(true);
@@ -1198,6 +1242,7 @@ class MediumLevel extends StatefulWidget {
 
   @override
   // ignore: library_private_types_in_public_api
+  // ignore: library_private_types_in_public_api
   _MediumLevelState createState() => _MediumLevelState();
 }
 
@@ -1205,18 +1250,12 @@ class _MediumLevelState extends State<MediumLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 35;
+  int timerCount = 45;
   int score = 0;
-  int remainingTime = 35;
+  int remainingTime = 45;
 
-  List<List<String>> correctAnswers = [
-    ['J', 'E', 'R', 'U', 'K'],
-    ['H', 'U', 'T', 'A', 'N'],
-    ['S', 'I', 'N', 'G', 'A'],
-    ['M', 'A', 'L', 'A', 'M'],
-    ['D', 'E', 'N', 'D', 'A'],
-  ];
-
+  List<List<String>> correctAnswers = [];
+  List<String> clues = [];
   List<List<String>> crossword = [
     ['', '', '', '', ''],
     ['', '', '', '', ''],
@@ -1225,20 +1264,11 @@ class _MediumLevelState extends State<MediumLevel>
     ['', '', '', '', ''],
   ];
 
-  List<String> clues = [
-    "Jenis buah yang identik dengan vitamin C",
-    "Ekosistem yang terdiri dari pohon dan tumbuhan",
-    "Raja hewan yang dikenal dengan nama “King of the Jungle”",
-    "Waktu untuk istirahat dan tidur",
-    "Sejumlah uang yang harus dibayar sebagai sanksi karena melanggar aturan",
-  ];
-
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 200;
 
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
@@ -1247,8 +1277,8 @@ class _MediumLevelState extends State<MediumLevel>
   @override
   void initState() {
     super.initState();
+    loadQuestions();
     startTime();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -1269,6 +1299,26 @@ class _MediumLevelState extends State<MediumLevel>
     );
   }
 
+  Future<void> loadQuestions() async {
+    final String response =
+        await rootBundle.loadString('assets/questions/medium.json');
+    final data = json.decode(response);
+
+    setState(() {
+      // Mendapatkan daftar soal
+      final List<dynamic> questions = data['questions'];
+
+      // Mengacak urutan soal
+      questions.shuffle(Random());
+
+      // Memisahkan petunjuk dan jawaban setelah diacak
+      clues = List<String>.from(questions.map((q) => q['clue']));
+      correctAnswers = List<List<String>>.from(
+        questions.map((q) => List<String>.from(q['answer'])),
+      );
+    });
+  }
+
   @override
   void dispose() {
     timer?.cancel();
@@ -1281,6 +1331,10 @@ class _MediumLevelState extends State<MediumLevel>
     setState(() {
       score += points;
     });
+
+    //menambahkan coin sesuai dengan skor
+    int coinsToAdd = points; // Langsung menyamakan jumlah koin dengan skor
+    Provider.of<CoinProvider>(context, listen: false).addCoins(coinsToAdd);
 
     if (isCorrectRow.every((row) => row)) {
       showFinalPopup(true);
@@ -1437,6 +1491,7 @@ class _MediumLevelState extends State<MediumLevel>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
@@ -1473,93 +1528,114 @@ class _MediumLevelState extends State<MediumLevel>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/image/3.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/image/3.png'),
+            fit: BoxFit.cover,
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 100),
-                Column(
-                  children: List.generate(crossword.length, (rowIndex) {
-                    return Row(
-                      children:
-                          List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor =
-                            const Color.fromARGB(255, 255, 255, 255);
+        ),
+        child: Column(children: [
+          Flexible(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 100),
+                  Column(
+                    children: List.generate(crossword.length, (rowIndex) {
+                      return Row(
+                        children: List.generate(crossword[rowIndex].length,
+                            (colIndex) {
+                          Color borderColor =
+                              const Color.fromARGB(255, 255, 255, 255);
 
-                        if (isCorrectRow[rowIndex]) {
-                          borderColor = Colors.green;
-                        } else if (isRowWrong[rowIndex]) {
-                          borderColor = Colors.red;
-                        }
+                          if (isCorrectRow[rowIndex]) {
+                            borderColor = Colors.green;
+                          } else if (isRowWrong[rowIndex]) {
+                            borderColor = Colors.red;
+                          }
 
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              showAnswerInputDialog(context, rowIndex);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(4.0),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: borderColor, width: 2.0),
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Center(
-                                  child: Text(
-                                    crossword[rowIndex][colIndex],
-                                    style: const TextStyle(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255)),
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                showAnswerInputDialog(context, rowIndex);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: borderColor, width: 2.0),
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Center(
+                                    child: Text(
+                                      crossword[rowIndex][colIndex],
+                                      style: const TextStyle(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color.fromARGB(
+                                              255, 255, 255, 255)),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 20),
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            statusMessage,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
+                          );
+                        }),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              statusMessage,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+          SingleChildScrollView(
+            child: Flexible(
+              flex: 1,
+              child: Consumer<CharacterProvider>(
+                builder: (context, characterProvider, child) {
+                  return Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(characterProvider.selectedBody,
+                            height: 180),
+                        Image.asset(characterProvider.selectedClothes,
+                            height: 180),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          )
+        ]),
       ),
     );
   }
@@ -1577,18 +1653,12 @@ class _HardLevelState extends State<HardLevel>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Timer? timer;
-  int timerCount = 30;
+  int timerCount = 45;
   int score = 0;
-  int remainingTime = 30;
+  int remainingTime = 45;
 
-  List<List<String>> correctAnswers = [
-    ['L', 'A', 'P', 'T', 'O', 'P'],
-    ['P', 'I', 'R', 'I', 'N', 'G'],
-    ['A', 'U', 'D', 'R', 'E', 'Y'],
-    ['K', 'E', 'R', 'E', 'T', 'A'],
-    ['T', 'A', 'N', 'G', 'A', 'N'],
-  ];
-
+  List<List<String>> correctAnswers = [];
+  List<String> clues = [];
   List<List<String>> crossword = [
     ['', '', '', '', '', ''],
     ['', '', '', '', '', ''],
@@ -1597,20 +1667,11 @@ class _HardLevelState extends State<HardLevel>
     ['', '', '', '', '', ''],
   ];
 
-  List<String> clues = [
-    "Gue ngoding paake apa rek",
-    "Alas makan",
-    "Nama programmer roblox",
-    "Transportasi yang berjalan diatas rel",
-    "Anggota badan yang digunakan untuk membawa barang",
-  ];
-
   int activeClueIndex = 0;
   List<bool> isCorrectRow = [false, false, false, false, false];
   List<bool> isRowWrong = [false, false, false, false, false];
   String statusMessage = '';
   Color statusColor = Colors.white;
-  double statusMessageYPosition = 200;
 
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
@@ -1619,8 +1680,8 @@ class _HardLevelState extends State<HardLevel>
   @override
   void initState() {
     super.initState();
+    loadQuestions();
     startTime();
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
@@ -1641,6 +1702,26 @@ class _HardLevelState extends State<HardLevel>
     );
   }
 
+  Future<void> loadQuestions() async {
+    final String response =
+        await rootBundle.loadString('assets/questions/hard.json');
+    final data = json.decode(response);
+
+    setState(() {
+      // Mendapatkan daftar soal
+      final List<dynamic> questions = data['questions'];
+
+      // Mengacak urutan soal
+      questions.shuffle(Random());
+
+      // Memisahkan petunjuk dan jawaban setelah diacak
+      clues = List<String>.from(questions.map((q) => q['clue']));
+      correctAnswers = List<List<String>>.from(
+        questions.map((q) => List<String>.from(q['answer'])),
+      );
+    });
+  }
+
   @override
   void dispose() {
     timer?.cancel();
@@ -1653,6 +1734,10 @@ class _HardLevelState extends State<HardLevel>
     setState(() {
       score += points;
     });
+
+    //menambahkan coin sesuai dengan skor
+    int coinsToAdd = points; // Langsung menyamakan jumlah koin dengan skor
+    Provider.of<CoinProvider>(context, listen: false).addCoins(coinsToAdd);
 
     if (isCorrectRow.every((row) => row)) {
       showFinalPopup(true);
@@ -1809,6 +1894,7 @@ class _HardLevelState extends State<HardLevel>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
@@ -1845,93 +1931,114 @@ class _HardLevelState extends State<HardLevel>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/image/7.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/image/7.png'),
+            fit: BoxFit.cover,
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 100),
-                Column(
-                  children: List.generate(crossword.length, (rowIndex) {
-                    return Row(
-                      children:
-                          List.generate(crossword[rowIndex].length, (colIndex) {
-                        Color borderColor =
-                            const Color.fromARGB(255, 255, 255, 255);
+        ),
+        child: Column(children: [
+          Flexible(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 100),
+                  Column(
+                    children: List.generate(crossword.length, (rowIndex) {
+                      return Row(
+                        children: List.generate(crossword[rowIndex].length,
+                            (colIndex) {
+                          Color borderColor =
+                              const Color.fromARGB(255, 255, 255, 255);
 
-                        if (isCorrectRow[rowIndex]) {
-                          borderColor = Colors.green;
-                        } else if (isRowWrong[rowIndex]) {
-                          borderColor = Colors.red;
-                        }
+                          if (isCorrectRow[rowIndex]) {
+                            borderColor = Colors.green;
+                          } else if (isRowWrong[rowIndex]) {
+                            borderColor = Colors.red;
+                          }
 
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              showAnswerInputDialog(context, rowIndex);
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.all(4.0),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: borderColor, width: 2.0),
-                              ),
-                              child: AspectRatio(
-                                aspectRatio: 1.0,
-                                child: Center(
-                                  child: Text(
-                                    crossword[rowIndex][colIndex],
-                                    style: const TextStyle(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                            Color.fromARGB(255, 255, 255, 255)),
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                showAnswerInputDialog(context, rowIndex);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: borderColor, width: 2.0),
+                                ),
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: Center(
+                                    child: Text(
+                                      crossword[rowIndex][colIndex],
+                                      style: const TextStyle(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color.fromARGB(
+                                              255, 255, 255, 255)),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 20),
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            statusMessage,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
+                          );
+                        }),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              statusMessage,
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+          SingleChildScrollView(
+            child: Flexible(
+              flex: 1,
+              child: Consumer<CharacterProvider>(
+                builder: (context, characterProvider, child) {
+                  return Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(characterProvider.selectedBody,
+                            height: 180),
+                        Image.asset(characterProvider.selectedClothes,
+                            height: 180),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          )
+        ]),
       ),
     );
   }
@@ -1940,9 +2047,13 @@ class _HardLevelState extends State<HardLevel>
 class LosePopup extends StatefulWidget {
   final int score;
 
-  const LosePopup({super.key, required this.score});
+  const LosePopup({
+    super.key,
+    required this.score,
+  });
 
   @override
+  // ignore: library_private_types_in_public_api
   // ignore: library_private_types_in_public_api
   _LosePopupState createState() => _LosePopupState();
 }
@@ -1972,8 +2083,6 @@ class _LosePopupState extends State<LosePopup>
     super.dispose();
   }
 
-  static const IconData person = IconData(0xe491, fontFamily: 'MaterialIcons');
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -1983,6 +2092,7 @@ class _LosePopupState extends State<LosePopup>
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
+            // Kotak utama LosePopup
             Container(
               width: 300,
               height: 320,
@@ -1997,16 +2107,22 @@ class _LosePopupState extends State<LosePopup>
                     top: 50,
                     child: Column(
                       children: [
-                        const Icon(person, size: 140, color: Colors.black),
-                        const SizedBox(height: 1),
-                        const Text(
-                          "Username",
-                          style: TextStyle(
-                            fontSize: 25,
-                            color: Colors.purple,
-                            decoration: TextDecoration.none,
-                          ),
+                        // Menggunakan Consumer untuk mengakses data karakter
+                        Consumer<CharacterProvider>(
+                          builder: (context, characterProvider, child) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.asset(characterProvider.selectedBody,
+                                    width: 160),
+                                Image.asset(characterProvider.selectedClothes,
+                                    width: 160),
+                              ],
+                            );
+                          },
                         ),
+                        const SizedBox(height: 8),
+                        // Username dan skor
                         const SizedBox(height: 2),
                         Text(
                           "Score: ${widget.score}",
@@ -2097,7 +2213,10 @@ class _LosePopupState extends State<LosePopup>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Layout()),
+                        MaterialPageRoute(
+                            builder: (context) => const Layout(
+                                  userData: null,
+                                )),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -2159,8 +2278,6 @@ class _WinPopupState extends State<WinPopup>
     super.dispose();
   }
 
-  static const IconData person = IconData(0xe491, fontFamily: 'MaterialIcons');
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -2184,16 +2301,25 @@ class _WinPopupState extends State<WinPopup>
                     top: 50,
                     child: Column(
                       children: [
-                        const Icon(person, size: 140, color: Colors.black),
-                        const SizedBox(height: 1),
-                        const Text(
-                          "Username",
-                          style: TextStyle(
-                            fontSize: 25,
-                            color: Colors.purple,
-                            decoration: TextDecoration.none,
-                          ),
+                        // Menggunakan Consumer untuk menampilkan karakter
+                        Consumer<CharacterProvider>(
+                          builder: (context, characterProvider, child) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.asset(
+                                  characterProvider.selectedBody,
+                                  height: 160,
+                                ),
+                                Image.asset(
+                                  characterProvider.selectedClothes,
+                                  height: 160,
+                                ),
+                              ],
+                            );
+                          },
                         ),
+                        const SizedBox(height: 8),
                         const SizedBox(height: 2),
                         Text(
                           "Score: ${widget.score}",
@@ -2284,7 +2410,10 @@ class _WinPopupState extends State<WinPopup>
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Layout()),
+                        MaterialPageRoute(
+                            builder: (context) => const Layout(
+                                  userData: null,
+                                )),
                       );
                     },
                     style: ElevatedButton.styleFrom(
